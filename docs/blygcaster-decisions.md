@@ -143,4 +143,14 @@ has never talked to a real Farcaster host. It is to be checked on the first live
 
 ## Test results at the end of the build
 
-*(Recorded below after the final full runs.)*
+All runs were on 2026-10-29, after every change.
+
+| Suite | Command | Result |
+|---|---|---|
+| Worker (vitest, workerd) | `npm test` | 152 files passed; 1917 tests passed, 5 skipped. The baseline was 147 files and 1848 passed. The five new files are `test/farcaster/*`, 69 tests. |
+| UI unit | `npm run test:ui` | 14 files, 111 tests passed. |
+| Browser (Playwright, desktop and mobile) | `npm run test:e2e` | 367 passed, 5 skipped, 0 failed. `e2e/farcaster.spec.ts` runs on its own Miniflare instance. |
+| Types | `npm run typecheck` | Clean. |
+| Template guard | `npm run check:template` | Shippable. |
+
+A first full browser run had two failures, the same parity test on desktop and mobile. They were caused by `e2e/farcaster.spec.ts` publishing a cast stub on the shared fixture database. Publishing an item with references drains the whole outbound mention queue, which processed the parity fixture's pending row early. The Farcaster spec now has its own instance, and upstream's spec is unchanged.
