@@ -48,13 +48,15 @@ export function FarcasterPanel({ item }: { item: { id: string; status: string; v
     return () => clearInterval(timer);
   }, [working, load]);
   if (!state) return error ? <Failure error={error} /> : null;
-  const act = async (action: () => Promise<FarcasterItem>) => {
+  const act = async (action: () => Promise<FarcasterItem>): Promise<boolean> => {
     setBusy(true);
     setError(undefined);
     try {
       setState(await action());
+      return true;
     } catch (e) {
       setError(e);
+      return false;
     } finally {
       setBusy(false);
     }
@@ -70,7 +72,11 @@ export function FarcasterPanel({ item }: { item: { id: string; status: string; v
           disabled={busy}
           onChange={(e) => {
             const enabled = e.target.checked;
-            void act(() => unwrap(BlyggerApi.setFarcasterCrosspost({ client, path: { id: item.id }, body: { enabled } })));
+            // Show the choice at once; the answer replaces it, and an error puts it back.
+            setState((s) => (s ? { ...s, enabled } : s));
+            void act(() => unwrap(BlyggerApi.setFarcasterCrosspost({ client, path: { id: item.id }, body: { enabled } }))).then((ok) => {
+              if (!ok) setState((s) => (s ? { ...s, enabled: !enabled } : s));
+            });
           }}
         />
         <span>Also cast on Farcaster when I publish</span>

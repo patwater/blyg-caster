@@ -597,7 +597,8 @@ function Byline({ entry, a, children }: { entry: Reading; a: EntryActions; child
     <p className="byline">
       {children}
       <span className="badge">{entry.kind}</span>
-      {entry.l0 ? <span className="badge badge-line">legacy rss</span> : null}
+      {/* blygcaster: a cast is an L0 entry too, but it is not a legacy feed. */}
+      {entry.l0 ? <span className="badge badge-line">{entry.imported?.remoteId.startsWith('fc-') ? 'farcaster' : 'legacy rss'}</span> : null}
       <span className="src">{a.imported?.subscriptionTitle || 'you'}</span>
       <span>· {date}</span>
       <EntryBylineSlot extensions={a.extensions} context={a.extensionContext} />

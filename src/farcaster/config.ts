@@ -15,7 +15,7 @@
 
 import type { Env } from "../types.ts";
 import { nowIso } from "../util.ts";
-import { FakeCastSink, FakeCastSource } from "./fake.ts";
+import { demoCasts, FakeCastSink, FakeCastSource } from "./fake.ts";
 import { farcasterHttp } from "./http.ts";
 import type { HttpFn } from "./http.ts";
 import { HubCastSink, HubCastSource } from "./hub.ts";
@@ -126,7 +126,7 @@ const isFake = (env: FarcasterEnv) => env.FARCASTER_FAKE === "1";
 // what it cast. Tests replace these with their own via setFakeAdapters().
 let fakes: { source: FakeCastSource; sink: FakeCastSink } | null = null;
 export function fakeAdapters(): { source: FakeCastSource; sink: FakeCastSink } {
-  fakes ??= { source: new FakeCastSource(), sink: new FakeCastSink() };
+  fakes ??= { source: new FakeCastSource(demoCasts()), sink: new FakeCastSink() };
   return fakes;
 }
 export function setFakeAdapters(next: { source: FakeCastSource; sink: FakeCastSink } | null): void {

@@ -29,6 +29,21 @@ export function fakeCast(partial: Partial<Cast> & { fid: number; hash: string })
 /** A hash that is deterministic in `n`, for fixtures. */
 export const fakeHash = (n: number): string => "0x" + n.toString(16).padStart(40, "0");
 
+/**
+ * A few casts for trying blygcaster locally with FARCASTER_FAKE=1: two
+ * accounts, a channel, an image, a link, a reply and text that looks like
+ * markdown. Invented accounts on invented FIDs; nothing here is anyone's.
+ */
+export function demoCasts(now = Date.now()): Cast[] {
+  const at = (hoursAgo: number) => new Date(now - hoursAgo * 3600_000).toISOString();
+  return [
+    fakeCast({ fid: 900001, hash: fakeHash(900001), handle: "riverkeeper", displayName: "River Keeper", createdAt: at(1), text: "The Colorado once reached the sea every year.\n\nNow most years it does not. What would it take to let it?", embeds: [{ type: "image", url: "https://picsum.photos/seed/canyon/640/400.jpg" }] }),
+    fakeCast({ fid: 900001, hash: fakeHash(900002), handle: "riverkeeper", displayName: "River Keeper", createdAt: at(5), text: "# Not a heading, *not emphasis*, just a cast with https://example.com/a_link in it." }),
+    fakeCast({ fid: 900001, hash: fakeHash(900003), handle: "riverkeeper", displayName: "River Keeper", createdAt: at(6), text: "Replying to myself.", parentHash: fakeHash(900002), parentFid: 900001 }),
+    fakeCast({ fid: 900002, hash: fakeHash(900004), handle: "silt", displayName: "Silt and Stone", createdAt: at(2), text: "Granaries in the canyon walls held a season's harvest from the floodplain.", channel: "water", parentUrl: "https://farcaster.xyz/~/channel/water", embeds: [{ type: "link", url: "https://www.nps.gov/grca/learn/historyculture/index.htm" }] }),
+  ];
+}
+
 export class FakeCastSource implements CastSource {
   readonly backend = "fake";
   casts: Cast[] = [];

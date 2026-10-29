@@ -128,7 +128,7 @@ export function FarcasterSettingsSection() {
         {status?.fake ? <p className="hint">The fake backend is on (FARCASTER_FAKE=1): nothing reaches Farcaster.</p> : null}
       </section>
       <p className="fc-save">
-        <Button type="button" className="btn" id="fc-save" disabled={busy || !draft} onClick={() => void save()}>
+        <Button type="button" className="btn btn-neutral" id="fc-save" disabled={busy || !draft} onClick={() => void save()}>
           save Farcaster settings
         </Button>{' '}
         {saved ? <span role="status">saved</span> : null} <a href={`${basepath}/ext/farcaster`}>cast log</a>
@@ -201,7 +201,7 @@ function FarcasterSources() {
         ) : null}
         <Button
           type="button"
-          className="btn"
+          className="btn btn-neutral"
           id="fc-add-source"
           disabled={busy || !value.trim()}
           onClick={() =>

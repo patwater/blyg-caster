@@ -4,7 +4,7 @@ import { readD1Migrations } from "@cloudflare/vitest-pool-workers";
 import { createServer } from "node:http";
 import { importedHtmlAttacks } from "../test/fixtures/imported-html-attacks.ts";
 const output = await build({ entryPoints: ["src/index.ts"], bundle: true, platform: "neutral", conditions: ["workerd"], external: ["cloudflare:*", "node:*"], mainFields: ["module", "main"], format: "esm", target: "es2022", loader: { ".txt": "text" }, write: false });
-const mf = new Miniflare({ modules: [{ type: "ESModule", path: "worker.mjs", contents: output.outputFiles[0].text }], compatibilityDate: "2026-07-01", compatibilityFlags: ["nodejs_compat"], host: "127.0.0.1", port: 8787, bindings: { OWNER_PASSWORD: "test-password", COOKIE_SECRET: "browser-test-cookie-secret", MOUNT: "", API_READ_LIMIT: "10000", API_WRITE_LIMIT: "10000" }, d1Databases: ["DB"], r2Buckets: ["MEDIA"], outboundService: () => new Response(null, { status: 503 }) });
+const mf = new Miniflare({ modules: [{ type: "ESModule", path: "worker.mjs", contents: output.outputFiles[0].text }], compatibilityDate: "2026-07-01", compatibilityFlags: ["nodejs_compat"], host: "127.0.0.1", port: 8787, bindings: { OWNER_PASSWORD: "test-password", COOKIE_SECRET: "browser-test-cookie-secret", MOUNT: "", API_READ_LIMIT: "10000", API_WRITE_LIMIT: "10000", FARCASTER_FAKE: "1" }, d1Databases: ["DB"], r2Buckets: ["MEDIA"], outboundService: () => new Response(null, { status: 503 }) });
 const db = await mf.getD1Database("DB");
 for (const migration of await readD1Migrations("./migrations")) {
   await db.batch(migration.queries.map((sql) => db.prepare(sql)));
