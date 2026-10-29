@@ -99,4 +99,12 @@ domains.
 Everything below was built against fake adapters and recorded fixtures, and it
 has never talked to a real Farcaster host. It is to be checked on the first live run.
 
-- *(Filled in as each phase lands.)*
+### Phase 1, data layer
+
+- **Message encoding is verified offline, but not against a node.** The hand-written CastAdd and CastRemove encoder (`src/farcaster/message.ts`) matches `@farcaster/core` 0.21.0 byte for byte, including the BLAKE3 hash and the Ed25519 signature (`test/farcaster/message.test.ts`). Whether a live Snapchain node accepts these messages has not been checked.
+- **The hub HTTP paths and query names are unverified:** `GET /v1/castsByFid?fid&pageSize&reverse&pageToken`, `/v1/castById?fid&hash`, `/v1/castsByParent?fid&hash` (replies) and `?url` (channels), `/v1/userDataByFid?fid`, `/v1/userNameProofByName?name`, and `POST /v1/submitMessage` with the encoded Message as `application/octet-stream`.
+- **The hub's JSON encoding of bytes is unverified.** `@farcaster/core`'s `toJSON` gives base64, and the hub HTTP API has historically given `0x` hex. `normalizeHash` accepts both.
+- **The hub's duplicate and not-found error bodies are unverified.** The sink treats a 4xx whose body says "duplicate" as success on retry, and a removal of an unknown cast as already done.
+- **The Neynar shapes come from the 2026-10-26 SDK, not from live calls.** Whether Neynar's API keeps running under Network School is unknown.
+- **The default cast URL template** `https://farcaster.xyz/{handle}/{shortHash}` and the handle-free fallback `https://farcaster.xyz/~/conversations/{hash}` are unverified. Both are settings, because the web domain is a display detail.
+- **The "public reference node"** at `snapchain.farcaster.xyz` (port 3381) named in search results is not assumed anywhere. The hub URL has no default, and the operator sets it.

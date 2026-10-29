@@ -1,0 +1,209 @@
+{
+  "generator": "@farcaster/core@0.21.0",
+  "privateKey": "0x1111111111111111111111111111111111111111111111111111111111111111",
+  "dataOptions": {
+    "fid": 424242,
+    "network": 1,
+    "timestamp": 150000000
+  },
+  "castAdds": [
+    {
+      "name": "plain cast with one url embed",
+      "input": {
+        "text": "A new fragment on my blyg",
+        "embeds": [
+          "https://blyg.example.com/f/abc123/"
+        ]
+      },
+      "dataBytes": "0x080110b2f2191880a3c34720012a451200221941206e657720667261676d656e74206f6e206d7920626c79672a0032240a2268747470733a2f2f626c79672e6578616d706c652e636f6d2f662f6162633132332f",
+      "hash": "0x05f78d681693e9d10e039e11e3d33a900eecb19f",
+      "signature": "0xef72c2edd381b0f49fa1856dd383db21334620f7573cf5fd5aa9c4c86102ce158f183d5bea47745995923dc2a7276783a88d633fcf7fd7d9bd73ecadc75b520c",
+      "signer": "0xd04ab232742bb4ab3a1368bd4615e4e6d0224ab71a016baf8520a332c9778737",
+      "message": "0x0a54080110b2f2191880a3c34720012a451200221941206e657720667261676d656e74206f6e206d7920626c79672a0032240a2268747470733a2f2f626c79672e6578616d706c652e636f6d2f662f6162633132332f121405f78d681693e9d10e039e11e3d33a900eecb19f18012240ef72c2edd381b0f49fa1856dd383db21334620f7573cf5fd5aa9c4c86102ce158f183d5bea47745995923dc2a7276783a88d633fcf7fd7d9bd73ecadc75b520c28013220d04ab232742bb4ab3a1368bd4615e4e6d0224ab71a016baf8520a332c97787373a54080110b2f2191880a3c34720012a451200221941206e657720667261676d656e74206f6e206d7920626c79672a0032240a2268747470733a2f2f626c79672e6578616d706c652e636f6d2f662f6162633132332f",
+      "json": {
+        "data": {
+          "type": "MESSAGE_TYPE_CAST_ADD",
+          "fid": 424242,
+          "timestamp": 150000000,
+          "network": "FARCASTER_NETWORK_MAINNET",
+          "castAddBody": {
+            "embedsDeprecated": [],
+            "mentions": [],
+            "text": "A new fragment on my blyg",
+            "mentionsPositions": [],
+            "embeds": [
+              {
+                "url": "https://blyg.example.com/f/abc123/"
+              }
+            ],
+            "type": "CAST",
+            "formatVersion": 0
+          }
+        },
+        "hash": "BfeNaBaT6dEOA54R49M6kA7ssZ8=",
+        "hashScheme": "HASH_SCHEME_BLAKE3",
+        "signature": "73LC7dOBsPSfoYVt04PbITNGIPdXPPX9WqnEyGECzhWPGD1b6kd0WZWSPcKnJ2eDqI1jP89/19m9c+ytx1tSDA==",
+        "signatureScheme": "SIGNATURE_SCHEME_ED25519",
+        "signer": "0EqyMnQrtKs6E2i9RhXk5tAiSrcaAWuvhSCjMsl3hzc=",
+        "dataBytes": "CAEQsvIZGICjw0cgASpFEgAiGUEgbmV3IGZyYWdtZW50IG9uIG15IGJseWcqADIkCiJodHRwczovL2JseWcuZXhhbXBsZS5jb20vZi9hYmMxMjMv"
+      }
+    },
+    {
+      "name": "cast in a channel (parentUrl)",
+      "input": {
+        "text": "Posted to a channel",
+        "embeds": [
+          "https://blyg.example.com/t/xyz/"
+        ],
+        "parentUrl": "https://farcaster.xyz/~/channel/water"
+      },
+      "dataBytes": "0x080110b2f2191880a3c34720012a6312003a2568747470733a2f2f6661726361737465722e78797a2f7e2f6368616e6e656c2f77617465722213506f7374656420746f2061206368616e6e656c2a0032210a1f68747470733a2f2f626c79672e6578616d706c652e636f6d2f742f78797a2f",
+      "hash": "0x1bc3ba585bc7559528876ea79bcd8bec52c250ab",
+      "signature": "0xcc8f66fafecc8de6d1e3b58f3a4a36b416235307ff8aa424b314fe4ac12b01fe6a89cbfa5ab29abdaea8d566b6ba7aab7d87378f7f27d044fd3de803ecdc4b07",
+      "signer": "0xd04ab232742bb4ab3a1368bd4615e4e6d0224ab71a016baf8520a332c9778737",
+      "message": "0x0a72080110b2f2191880a3c34720012a6312003a2568747470733a2f2f6661726361737465722e78797a2f7e2f6368616e6e656c2f77617465722213506f7374656420746f2061206368616e6e656c2a0032210a1f68747470733a2f2f626c79672e6578616d706c652e636f6d2f742f78797a2f12141bc3ba585bc7559528876ea79bcd8bec52c250ab18012240cc8f66fafecc8de6d1e3b58f3a4a36b416235307ff8aa424b314fe4ac12b01fe6a89cbfa5ab29abdaea8d566b6ba7aab7d87378f7f27d044fd3de803ecdc4b0728013220d04ab232742bb4ab3a1368bd4615e4e6d0224ab71a016baf8520a332c97787373a72080110b2f2191880a3c34720012a6312003a2568747470733a2f2f6661726361737465722e78797a2f7e2f6368616e6e656c2f77617465722213506f7374656420746f2061206368616e6e656c2a0032210a1f68747470733a2f2f626c79672e6578616d706c652e636f6d2f742f78797a2f",
+      "json": {
+        "data": {
+          "type": "MESSAGE_TYPE_CAST_ADD",
+          "fid": 424242,
+          "timestamp": 150000000,
+          "network": "FARCASTER_NETWORK_MAINNET",
+          "castAddBody": {
+            "embedsDeprecated": [],
+            "mentions": [],
+            "parentUrl": "https://farcaster.xyz/~/channel/water",
+            "text": "Posted to a channel",
+            "mentionsPositions": [],
+            "embeds": [
+              {
+                "url": "https://blyg.example.com/t/xyz/"
+              }
+            ],
+            "type": "CAST",
+            "formatVersion": 0
+          }
+        },
+        "hash": "G8O6WFvHVZUoh26nm82L7FLCUKs=",
+        "hashScheme": "HASH_SCHEME_BLAKE3",
+        "signature": "zI9m+v7MjebR47WPOko2tBYjUwf/iqQksxT+SsErAf5qicv6WrKava6o1Wa2unqrfYc3j38n0ET9PegD7NxLBw==",
+        "signatureScheme": "SIGNATURE_SCHEME_ED25519",
+        "signer": "0EqyMnQrtKs6E2i9RhXk5tAiSrcaAWuvhSCjMsl3hzc=",
+        "dataBytes": "CAEQsvIZGICjw0cgASpjEgA6JWh0dHBzOi8vZmFyY2FzdGVyLnh5ei9+L2NoYW5uZWwvd2F0ZXIiE1Bvc3RlZCB0byBhIGNoYW5uZWwqADIhCh9odHRwczovL2JseWcuZXhhbXBsZS5jb20vdC94eXov"
+      }
+    },
+    {
+      "name": "reply to a cast (parentCastId)",
+      "input": {
+        "text": "My stub answers this: https://blyg.example.com/t/stub1/",
+        "embeds": [
+          "https://blyg.example.com/t/stub1/"
+        ],
+        "parentCastId": {
+          "fid": 3,
+          "hash": "0xabababababababababababababababababababab"
+        }
+      },
+      "dataBytes": "0x080110b2f2191880a3c34720012a7c12001a1808031214abababababababababababababababababababab22374d79207374756220616e737765727320746869733a2068747470733a2f2f626c79672e6578616d706c652e636f6d2f742f73747562312f2a0032230a2168747470733a2f2f626c79672e6578616d706c652e636f6d2f742f73747562312f",
+      "hash": "0xfc9d2d2aac2f8c48f01dd25b60b311312ffed410",
+      "signature": "0x23b77cb51b98b43f9c7808f008522d4676c6fba2446a4614651e797c6764d5ab0f2e6cf736d8345bfd828862d893e9183915c2d0730ac37d3d9d278b8cf73b0a",
+      "signer": "0xd04ab232742bb4ab3a1368bd4615e4e6d0224ab71a016baf8520a332c9778737",
+      "message": "0x0a8b01080110b2f2191880a3c34720012a7c12001a1808031214abababababababababababababababababababab22374d79207374756220616e737765727320746869733a2068747470733a2f2f626c79672e6578616d706c652e636f6d2f742f73747562312f2a0032230a2168747470733a2f2f626c79672e6578616d706c652e636f6d2f742f73747562312f1214fc9d2d2aac2f8c48f01dd25b60b311312ffed4101801224023b77cb51b98b43f9c7808f008522d4676c6fba2446a4614651e797c6764d5ab0f2e6cf736d8345bfd828862d893e9183915c2d0730ac37d3d9d278b8cf73b0a28013220d04ab232742bb4ab3a1368bd4615e4e6d0224ab71a016baf8520a332c97787373a8b01080110b2f2191880a3c34720012a7c12001a1808031214abababababababababababababababababababab22374d79207374756220616e737765727320746869733a2068747470733a2f2f626c79672e6578616d706c652e636f6d2f742f73747562312f2a0032230a2168747470733a2f2f626c79672e6578616d706c652e636f6d2f742f73747562312f",
+      "json": {
+        "data": {
+          "type": "MESSAGE_TYPE_CAST_ADD",
+          "fid": 424242,
+          "timestamp": 150000000,
+          "network": "FARCASTER_NETWORK_MAINNET",
+          "castAddBody": {
+            "embedsDeprecated": [],
+            "mentions": [],
+            "parentCastId": {
+              "fid": 3,
+              "hash": "q6urq6urq6urq6urq6urq6urq6s="
+            },
+            "text": "My stub answers this: https://blyg.example.com/t/stub1/",
+            "mentionsPositions": [],
+            "embeds": [
+              {
+                "url": "https://blyg.example.com/t/stub1/"
+              }
+            ],
+            "type": "CAST",
+            "formatVersion": 0
+          }
+        },
+        "hash": "/J0tKqwvjEjwHdJbYLMRMS/+1BA=",
+        "hashScheme": "HASH_SCHEME_BLAKE3",
+        "signature": "I7d8tRuYtD+ceAjwCFItRnbG+6JEakYUZR55fGdk1asPLmz3Ntg0W/2CiGLYk+kYORXC0HMKw309nSeLjPc7Cg==",
+        "signatureScheme": "SIGNATURE_SCHEME_ED25519",
+        "signer": "0EqyMnQrtKs6E2i9RhXk5tAiSrcaAWuvhSCjMsl3hzc=",
+        "dataBytes": "CAEQsvIZGICjw0cgASp8EgAaGAgDEhSrq6urq6urq6urq6urq6urq6urqyI3TXkgc3R1YiBhbnN3ZXJzIHRoaXM6IGh0dHBzOi8vYmx5Zy5leGFtcGxlLmNvbS90L3N0dWIxLyoAMiMKIWh0dHBzOi8vYmx5Zy5leGFtcGxlLmNvbS90L3N0dWIxLw=="
+      }
+    },
+    {
+      "name": "multibyte text, no embeds",
+      "input": {
+        "text": "Rivers — and the 🏞️ that shape them. Ça coule.",
+        "embeds": []
+      },
+      "dataBytes": "0x080110b2f2191880a3c34720012a3c1200223652697665727320e2809420616e642074686520f09f8f9eefb88f2074686174207368617065207468656d2e20c3876120636f756c652e2a00",
+      "hash": "0x972686461ef23cb9bb17a77552bf8f8c44f4177f",
+      "signature": "0xe457bb22e312baa4f2aaa4e760425b880bcddef3bcbace3e1fd7a0c530526aa95bf42c8e3e1733afa73e7f895be0b2e04591780ea4ab17a44e0faa601ef57008",
+      "signer": "0xd04ab232742bb4ab3a1368bd4615e4e6d0224ab71a016baf8520a332c9778737",
+      "message": "0x0a4b080110b2f2191880a3c34720012a3c1200223652697665727320e2809420616e642074686520f09f8f9eefb88f2074686174207368617065207468656d2e20c3876120636f756c652e2a001214972686461ef23cb9bb17a77552bf8f8c44f4177f18012240e457bb22e312baa4f2aaa4e760425b880bcddef3bcbace3e1fd7a0c530526aa95bf42c8e3e1733afa73e7f895be0b2e04591780ea4ab17a44e0faa601ef5700828013220d04ab232742bb4ab3a1368bd4615e4e6d0224ab71a016baf8520a332c97787373a4b080110b2f2191880a3c34720012a3c1200223652697665727320e2809420616e642074686520f09f8f9eefb88f2074686174207368617065207468656d2e20c3876120636f756c652e2a00",
+      "json": {
+        "data": {
+          "type": "MESSAGE_TYPE_CAST_ADD",
+          "fid": 424242,
+          "timestamp": 150000000,
+          "network": "FARCASTER_NETWORK_MAINNET",
+          "castAddBody": {
+            "embedsDeprecated": [],
+            "mentions": [],
+            "text": "Rivers — and the 🏞️ that shape them. Ça coule.",
+            "mentionsPositions": [],
+            "embeds": [],
+            "type": "CAST",
+            "formatVersion": 0
+          }
+        },
+        "hash": "lyaGRh7yPLm7F6d1Ur+PjET0F38=",
+        "hashScheme": "HASH_SCHEME_BLAKE3",
+        "signature": "5Fe7IuMSuqTyqqTnYEJbiAvN3vO8us4+H9egxTBSaqlb9CyOPhczr6c+f4lb4LLgRZF4DqSrF6ROD6pgHvVwCA==",
+        "signatureScheme": "SIGNATURE_SCHEME_ED25519",
+        "signer": "0EqyMnQrtKs6E2i9RhXk5tAiSrcaAWuvhSCjMsl3hzc=",
+        "dataBytes": "CAEQsvIZGICjw0cgASo8EgAiNlJpdmVycyDigJQgYW5kIHRoZSDwn4+e77iPIHRoYXQgc2hhcGUgdGhlbS4gw4dhIGNvdWxlLioA"
+      }
+    }
+  ],
+  "castRemoves": [
+    {
+      "name": "remove a cast",
+      "input": {
+        "targetHash": "0xcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd"
+      },
+      "dataBytes": "0x080210b2f2191880a3c347200132160a14cdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd",
+      "hash": "0xc2aeee0315a17dd4075beb925e02f4078355c5d4",
+      "signature": "0xb8394f9bf32e53c5b97724035d331ccc40bffec4e738008e24e735a9216356cfc651071bc450af153e64af9aef7b86c9641c35851857cbe67abb21a1e5a12a0f",
+      "signer": "0xd04ab232742bb4ab3a1368bd4615e4e6d0224ab71a016baf8520a332c9778737",
+      "message": "0x0a25080210b2f2191880a3c347200132160a14cdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd1214c2aeee0315a17dd4075beb925e02f4078355c5d418012240b8394f9bf32e53c5b97724035d331ccc40bffec4e738008e24e735a9216356cfc651071bc450af153e64af9aef7b86c9641c35851857cbe67abb21a1e5a12a0f28013220d04ab232742bb4ab3a1368bd4615e4e6d0224ab71a016baf8520a332c97787373a25080210b2f2191880a3c347200132160a14cdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd",
+      "json": {
+        "data": {
+          "type": "MESSAGE_TYPE_CAST_REMOVE",
+          "fid": 424242,
+          "timestamp": 150000000,
+          "network": "FARCASTER_NETWORK_MAINNET",
+          "castRemoveBody": {
+            "targetHash": "zc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc0="
+          }
+        },
+        "hash": "wq7uAxWhfdQHW+uSXgL0B4NVxdQ=",
+        "hashScheme": "HASH_SCHEME_BLAKE3",
+        "signature": "uDlPm/MuU8W5dyQDXTMczEC//sTnOACOJOc1qSFjVs/GUQcbxFCvFT5kr5rve4bJZBw1hRhXy+Z6uyGh5aEqDw==",
+        "signatureScheme": "SIGNATURE_SCHEME_ED25519",
+        "signer": "0EqyMnQrtKs6E2i9RhXk5tAiSrcaAWuvhSCjMsl3hzc=",
+        "dataBytes": "CAIQsvIZGICjw0cgATIWChTNzc3Nzc3Nzc3Nzc3Nzc3Nzc3NzQ=="
+      }
+    }
+  ]
+}
