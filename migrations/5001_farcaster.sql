@@ -1,5 +1,6 @@
--- blygcaster: Farcaster state. Local migrations are numbered from 9000 so that
--- upstream Studio's own migrations (0001-0999) never collide with them.
+-- blygcaster: Farcaster state. The fork's migrations are numbered 5000-5999:
+-- clear of upstream Studio's (0001 upwards) and of the 9000-9999 range that
+-- upstream reserves for an operator's own local migrations.
 --
 -- Everything here is client-private. None of it reaches an item document, the
 -- feed, the archive index, the manifest, content_html or a mention. A

@@ -49,7 +49,10 @@ export interface CrosspostInput {
  * note when the item discloses generated text.
  */
 export function composeCrosspost(input: CrosspostInput, settings: Pick<FarcasterSettings, "ai_note" | "crosspost_channel_id" | "crosspost_channel_parent_url">): CastDraft {
-  const blocks = selectionText(input.html).split("\n").filter(Boolean);
+  // A thread opens with the owner's own words, not someone else's: a stub's
+  // quote (or any quote) is left out of the cast when there is text besides it.
+  const own = input.kind === "thread" ? selectionText(input.html.replace(/<blockquote[\s\S]*?<\/blockquote>/gi, "")) : "";
+  const blocks = (own.trim() ? own : selectionText(input.html)).split("\n").filter(Boolean);
   const body = (input.kind === "fragment" ? blocks : blocks.slice(0, 2)).join("\n\n");
   const note = input.generated && settings.ai_note.trim() ? settings.ai_note.trim() : "";
   const budget = CAST_TEXT_MAX_BYTES - (note ? utf8("\n\n" + note) : 0);

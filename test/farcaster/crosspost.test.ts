@@ -221,6 +221,13 @@ describe("what gets cast", () => {
     expect(draft.text).toBe("On basins\n\nFirst paragraph. …");
   });
 
+  it("casts a stub's own words, not the passage it quotes", () => {
+    const draft = composeCrosspost({ kind: "thread", html: "<blockquote><p>Their words.</p></blockquote><p>My answer.</p>", url: "https://b.example/t/x/", generated: false }, settings);
+    expect(draft.text).toBe("My answer.");
+    const quoteOnly = composeCrosspost({ kind: "thread", html: "<blockquote><p>Only a quote.</p></blockquote>", url: "https://b.example/t/x/", generated: false }, settings);
+    expect(quoteOnly.text).toBe("Only a quote.");
+  });
+
   it("says so when the item discloses generated text, and fits the note in", () => {
     const draft = composeCrosspost({ kind: "fragment", html: `<p>${"é".repeat(400)}</p>`, url: "https://b.example/f/x/", generated: true }, settings);
     expect(draft.text.endsWith("\n\nIncludes AI-generated text.")).toBe(true);

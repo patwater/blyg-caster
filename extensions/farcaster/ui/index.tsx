@@ -52,11 +52,11 @@ function CastView({ cast, focus }: { cast: FarcasterCast; focus?: boolean }) {
   );
 }
 
-function ThreadSheet({ context, ref, close }: { context: EntryContext; ref: { fid: number; hash: string }; close: () => void }) {
+function ThreadSheet({ context, cast, close }: { context: EntryContext; cast: { fid: number; hash: string }; close: () => void }) {
   const [thread, setThread] = useState<{ cast: FarcasterCast | null; parents: FarcasterCast[]; replies: FarcasterCast[]; error?: string }>();
   const [failure, setFailure] = useState<string>();
   useEffect(() => {
-    unwrap(BlyggerApi.getFarcasterThread({ client: context.client, query: ref })).then(setThread, (e: unknown) =>
+    unwrap(BlyggerApi.getFarcasterThread({ client: context.client, query: cast })).then(setThread, (e: unknown) =>
       setFailure(e instanceof Error ? e.message : String(e)),
     );
   }, []);
@@ -103,7 +103,7 @@ function Byline({ context }: { context: EntryContext }) {
   return (
     <span data-extension="farcaster" className="fc-byline">
       {' · '}
-      <button type="button" className="fc-inline" onClick={() => context.openSheet((close) => <ThreadSheet context={context} ref={ref} close={close} />)}>
+      <button type="button" className="fc-inline" onClick={() => context.openSheet((close) => <ThreadSheet context={context} cast={ref} close={close} />)}>
         thread
       </button>
       {marker ? (

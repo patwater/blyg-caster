@@ -1,3 +1,46 @@
+# blygcaster
+
+**blygcaster** is a fork of Blygger Studio (below) that also reads Farcaster and
+cross-posts to it. Everything Studio does stays as it is: publishing, subscribing,
+quoting, stubbing, pinning and forking. Three things are added:
+
+- **It reads Farcaster.** Add accounts and channels in Settings → Farcaster. Their
+  casts appear in Reading beside your blogs, as ordinary entries with the author,
+  the time, the text and any images. There are no likes, recasts or counts anywhere.
+  Each cast has a "thread" sheet with its parents and replies, and a marker
+  when you have stubbed it.
+- **It stubs casts.** "stub ↗" on a cast drafts a thread quoting the passage you
+  selected (or the whole cast), with a `{url}` `stub_of` whose `cited` label
+  names the author, handle, short hash and FID, frozen when you make the stub. A
+  stub with no words of your own will not publish. After publishing, you can
+  reply to the cast on Farcaster with a link to your stub. This is offered, never
+  automatic.
+- **It cross-posts.** "Also cast on Farcaster when I publish" in the editor is off
+  for every item until you turn it on. Publishing never waits for Farcaster:
+  the cast goes out in the background and retries at 15 minutes, 1 hour, 4 hours,
+  12 hours and 24 hours, and its status is shown in the editor and the cast log.
+  New words in a new version replace the cast. Withdrawing deletes it, and pinning
+  never re-casts. A kill switch in Settings stops all of it.
+
+Cross-post records, sources and settings are client-private. They never enter an
+item document, the feed, the archive index, the manifest or the blogroll. A
+stub of a cast is different by design: like any `{url}` stub, its `stub_of`
+names the cast's web page. The one other public trace is a small "Also on
+Farcaster" link on a cross-posted item's own permalink page.
+
+**Setting it up:** the signer, the secrets and the backends are in
+[`docs/blygcaster-signer.md`](docs/blygcaster-signer.md). The Farcaster backends
+sit behind two interfaces in `src/farcaster/` (`CastSource`, `CastSink`), with
+a Snapchain hub adapter (your own signer, the default) and a Neynar adapter.
+Decisions, the documentation consulted, and what has not yet been checked against
+the live network are in [`docs/blygcaster-decisions.md`](docs/blygcaster-decisions.md).
+Every edit to an upstream file is listed in
+[`docs/blygcaster-hooks.md`](docs/blygcaster-hooks.md), and pulling in upstream
+changes is described in [`UPSTREAM.md`](UPSTREAM.md). Try it locally with no
+keys: `npx wrangler dev --var FARCASTER_FAKE:1`.
+
+---
+
 # Blygger Studio
 
 The reference client for the [Blygger protocol](https://github.com/blygger/blygger-spec) —

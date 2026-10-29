@@ -29,9 +29,13 @@ Then resolve conflicts, run `npm run sdk:generate` if any route changed, run
 Conflicts should be confined to the files listed in
 [`docs/blygcaster-hooks.md`](docs/blygcaster-hooks.md), which records every
 edit this fork makes to a file that came from upstream. Everything else that is
-blygcaster's own lives in `src/farcaster/`, `extensions/farcaster/`,
-`migrations/9*_farcaster_*.sql`, `test/farcaster/` and the `docs/blygcaster-*`
-files, which upstream never touches.
+blygcaster's own lives in `src/farcaster/`, `src/ui/farcaster/`,
+`extensions/farcaster/`, `migrations/5001_farcaster.sql`, `test/farcaster/`,
+`e2e/farcaster.spec.ts`, two `scripts/farcaster-*.mjs` files and the
+`docs/blygcaster-*` files, which upstream never touches. The fork's migrations
+are numbered 5000–5999, clear of upstream's (0001 upwards) and of the
+9000–9999 range upstream reserves for an operator's own, so none of them
+collide.
 
 Do not use `npm run upgrade` here. That script merges upstream release tags into
 a clone of upstream, which assumes shared history.

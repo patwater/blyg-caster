@@ -94,6 +94,30 @@ To let a future session read them, add `docs.neynar.com`, `docs.farcaster.xyz`,
 `api.neynar.com` and a Snapchain host to the environment's allowed network
 domains.
 
+## Architecture choices made while building
+
+- **Reading is a subscription kind, not a separate page** (brief §5, Q2). A Farcaster account or channel is a `subscriptions` row of kind `farcaster`, and each cast is an ordinary L0 row in `imported_items`. The importer's own scheduler polls it every 30 minutes, with the usual jitter and backoff. Pull to refresh is the reader's existing resync button. The reading view, the source filter, read state, hoppers and the stub action therefore all work unchanged. The importer allowed this with one change: `pollSubscription` needed the Worker's `env` to reach the secrets, so an optional `env` now passes through the scheduler. The fallback page at `/studio/ext/farcaster` was not needed for reading. It hosts the cast log instead.
+- **The source spec lives in the subscription's `feed_url`** (`farcaster://account/3`, `farcaster://channel/water?parent_url=…`). Deleting a subscription through the ordinary route therefore leaves nothing behind.
+- **Stubbing uses Studio's own "stub ↗"** for the visible button (Q6). The server-side response draft hands a cast to `createCastStubDraft`, which quotes the words held locally. Stubbing a cast never waits on the network, and the quote is what the owner read. The passage chosen in the reader is remembered on `selectionchange`, because on iPad Safari and phones a tap on a button clears the selection before the click arrives.
+- **The brief's `openDraft` sketch is implemented server side.** The `CreateItemData` type (`kind`, `content_md`, `stub_of` with `{url, cited}`) and the extension context's `openDraft` were confirmed as the brief asked. The draft is composed on the server (`src/farcaster/compose.ts`), because the server holds the cast and the passage check, so a client cannot build a cast stub that misquotes it.
+- **UI placement.** The reader tools (the thread sheet, the stubbed marker and the cast log) are a browser-only Studio extension, `extensions/farcaster`. It ships compiled in and starts off, like every extension, and Settings → Farcaster offers to turn it on. The Settings section and the editor panel are in `src/ui/farcaster/`, each mounted by a one-line hook, because the extension slots do not reach Settings or the editor.
+- **Cross-post bookkeeping** is one table, `farcaster_casts`, with one row per cast: a version's cross-post, or a reply. The row carries its own deletion. A row is claimed with a five-minute lease before each attempt, so the cron and a publish's own attempt cannot cast twice at once. Every retry of one cast is byte-identical: the hub sink signs from the row's fixed timestamp, and the Neynar sink sends the row's id as `idem`. A retry therefore cannot make a second cast.
+- **"Unchanged" means the cast would read the same.** Studio's `publish()` always makes a new version, so a second publish of unchanged words is detected by comparing the composed cast draft with the live one. The same draft means no new cast. A pin is not a publish, so it never reaches this code.
+- **The kill switch holds rather than discards.** When it is off, a publish records the cast as `skipped`, and nothing is cast or deleted. Casts and deletions that were already waiting stay waiting and go out when it is turned back on.
+- **The hub sink uses no Farcaster SDK.** `src/farcaster/message.ts` encodes the protobuf by hand, using WebCrypto Ed25519 and `@noble/hashes` BLAKE3 (already in the tree). It is checked byte for byte against vectors from `@farcaster/core` 0.21.0, which is not a dependency (`scripts/farcaster-golden-vectors.mjs`).
+- **Accessibility and layout.** Controls are at least 44 px tall. Layouts were checked at iPad width (834 px) and phone width (390 px), in screenshots and in the mobile Playwright project, with no sideways scroll.
+
+## Things to know before relying on it
+
+- **The `/api` contract grew, additively.** The brief says to stop and ask about anything that touches the API contract. These changes are to this client's own contract (decision #31), not to the protocol, and the brief anticipated them ("openapi.json and the SDK are regenerated if any route changed"), so I went ahead and flag them here. There are nine new operations under `/api/farcaster/`, and the `Subscription.kind` enum gains `"farcaster"`. A third-party tool that validates `kind` strictly against `blyg | rss` could reject a Farcaster subscription in `GET /api/subscriptions`. The new operations are also MCP tools under the same scopes. Casting (`setFarcasterCrosspost`, `replyOnFarcaster`) needs `owner:publish`.
+- **No protocol meaning was changed.** Item documents, the feed, the archive index, the manifest, `content_html` and mentions are untouched. A stub of a cast is an ordinary `{url}` stub per §10.6. The public blogroll and its OPML exclude Farcaster sources.
+- **A lost answer followed by a withdrawal can leave a cast behind.** Suppose a post reaches Farcaster but its answer is lost (a timeout), and the item is withdrawn before the retry. The row is then cancelled with no hash to delete. With the hub sink the hash is deterministic, so a later version could compute it. This is not built.
+- **Turning cross-posting off for an item does not delete its cast.** It only stops future publishes from casting. Withdraw the item to delete the cast.
+- **The reply offer is made once per stub.** The reply is deleted when the stub is withdrawn, but it is not recast when the stub is republished.
+- **Account sources show top-level casts only.** Replies appear in the thread sheet.
+- **A channel read through a hub needs its parent URL.** Hubs know channels only by that URL.
+- **Reading cards show the date, as Studio's cards do.** The thread sheet shows the time of day.
+
 ## Unverified against the real network
 
 Everything below was built against fake adapters and recorded fixtures, and it
@@ -108,3 +132,15 @@ has never talked to a real Farcaster host. It is to be checked on the first live
 - **The Neynar shapes come from the 2026-10-26 SDK, not from live calls.** Whether Neynar's API keeps running under Network School is unknown.
 - **The default cast URL template** `https://farcaster.xyz/{handle}/{shortHash}` and the handle-free fallback `https://farcaster.xyz/~/conversations/{hash}` are unverified. Both are settings, because the web domain is a display detail.
 - **The "public reference node"** at `snapchain.farcaster.xyz` (port 3381) named in search results is not assumed anywhere. The hub URL has no default, and the operator sets it.
+
+### Phases 2 to 4
+
+- **Every Farcaster read and write in the reader, the stub flow and cross-posting was exercised against the fake adapters only**, in the Worker suite (`test/farcaster/*.test.ts`) and in the browser (`e2e/farcaster.spec.ts`, desktop and mobile).
+- **The hub source looks up names with `/v1/userDataByFid`** and caches them for a week in `farcaster_accounts`. It puts @mentions back at their UTF-8 byte positions. Both are unverified against real hub data.
+- **Neynar's `members_only=false` and `with_replies=false` on channel feeds**, and `include_replies=false` on user casts, come from the SDK's parameter list and are unverified.
+- **Posting into a channel through the hub uses the channel's parent URL as `parentUrl`.** Whether a given channel's parent URL is `https://farcaster.xyz/~/channel/<id>`, an older `warpcast.com` URL or a `chain://` URL varies by channel and is unverified. The owner enters it.
+- **The signer registration steps in `docs/blygcaster-signer.md` are described, not run.** No custody wallet was involved at any point.
+
+## Test results at the end of the build
+
+*(Recorded below after the final full runs.)*

@@ -14,7 +14,8 @@ import { initConfig } from "./init-config.ts";
 
 const config = JSON.parse(stripJsonComments(readFileSync("wrangler.jsonc", "utf8")));
 const problems: string[] = [];
-if (config.name !== "blyg") problems.push(`name is "${config.name}", not the template's "blyg"`);
+// blygcaster: the fork's template names its own Worker (brief §2.2).
+if (config.name !== "blygcaster") problems.push(`name is "${config.name}", not the template's "blygcaster"`);
 if (config.account_id !== undefined) problems.push("account_id must not be committed");
 if (config.env !== undefined) problems.push("named env blocks are deployment-specific");
 if (config.routes !== undefined) problems.push("routes name a domain");
