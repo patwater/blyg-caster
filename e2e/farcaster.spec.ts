@@ -1,9 +1,11 @@
 import { test, expect, type Page } from './fixture';
 
 // blygcaster's Farcaster flow in the browser, on desktop and phone (the mobile
-// project). The e2e server runs with FARCASTER_FAKE=1, so the reader reads the
-// in-memory demo casts (src/farcaster/fake.ts) and casting goes to a fake sink:
-// nothing here reaches Farcaster.
+// project), against its own instance (port 8793, scripts/e2e-server.ts) with
+// FARCASTER_FAKE=1: the reader reads the in-memory demo casts
+// (src/farcaster/fake.ts) and casting goes to a fake sink. Nothing here reaches
+// Farcaster, and nothing here touches the other specs' database.
+test.use({ baseURL: 'http://127.0.0.1:8793' });
 async function login(page: Page) {
   await page.goto('/studio/login');
   await page.locator('[name=password]').fill('test-password');
@@ -113,7 +115,7 @@ test('read casts, stub a passage, and cross-post, without metrics', async ({ pag
   await publishInEditor(page);
   await expect(page.locator('#farcaster-panel .fc-records')).toContainText('v1 · cast');
 
-  // Leave the shared fixture database as other specs expect it.
+  // The mobile project runs this again on the same instance: start it clean.
   await api(page, 'DELETE', `/subscriptions/${sub.id}`);
   await api(page, 'PATCH', '/settings', { extensions: [] });
   expect(errors).toEqual([]);

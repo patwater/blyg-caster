@@ -71,7 +71,7 @@ whether the hook is generic enough to offer upstream.
 
 | File | Change | Offer upstream? |
 |---|---|---|
-| `scripts/e2e-server.ts` | The browser-test server runs with `FARCASTER_FAKE=1`. It has no Farcaster subscriptions until `e2e/farcaster.spec.ts` makes one, and that spec removes it. | No. |
+| `scripts/e2e-server.ts` | Starts one more Miniflare instance (port 8793, its own database, `FARCASTER_FAKE=1`) for `e2e/farcaster.spec.ts`, so that spec's published stubs and drained outbound queue never touch other specs' fixtures. | No. |
 | `scripts/check-template.ts` | The template's Worker name is `blygcaster`. | No. |
 | `package.json`, `package-lock.json` | `@noble/hashes` 2.4.0 (already in the tree via better-auth) becomes a direct dependency, for BLAKE3. | No. |
 

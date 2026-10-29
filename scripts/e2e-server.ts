@@ -4,7 +4,7 @@ import { readD1Migrations } from "@cloudflare/vitest-pool-workers";
 import { createServer } from "node:http";
 import { importedHtmlAttacks } from "../test/fixtures/imported-html-attacks.ts";
 const output = await build({ entryPoints: ["src/index.ts"], bundle: true, platform: "neutral", conditions: ["workerd"], external: ["cloudflare:*", "node:*"], mainFields: ["module", "main"], format: "esm", target: "es2022", loader: { ".txt": "text" }, write: false });
-const mf = new Miniflare({ modules: [{ type: "ESModule", path: "worker.mjs", contents: output.outputFiles[0].text }], compatibilityDate: "2026-07-01", compatibilityFlags: ["nodejs_compat"], host: "127.0.0.1", port: 8787, bindings: { OWNER_PASSWORD: "test-password", COOKIE_SECRET: "browser-test-cookie-secret", MOUNT: "", API_READ_LIMIT: "10000", API_WRITE_LIMIT: "10000", FARCASTER_FAKE: "1" }, d1Databases: ["DB"], r2Buckets: ["MEDIA"], outboundService: () => new Response(null, { status: 503 }) });
+const mf = new Miniflare({ modules: [{ type: "ESModule", path: "worker.mjs", contents: output.outputFiles[0].text }], compatibilityDate: "2026-07-01", compatibilityFlags: ["nodejs_compat"], host: "127.0.0.1", port: 8787, bindings: { OWNER_PASSWORD: "test-password", COOKIE_SECRET: "browser-test-cookie-secret", MOUNT: "", API_READ_LIMIT: "10000", API_WRITE_LIMIT: "10000" }, d1Databases: ["DB"], r2Buckets: ["MEDIA"], outboundService: () => new Response(null, { status: 503 }) });
 const db = await mf.getD1Database("DB");
 for (const migration of await readD1Migrations("./migrations")) {
   await db.batch(migration.queries.map((sql) => db.prepare(sql)));
@@ -54,6 +54,14 @@ await securityDb.prepare("INSERT INTO items(id,kind,status,created,updated,versi
 for (const version of [1,2]) await securityDb.prepare("INSERT INTO versions(item_id,version,content_md,content_hash,published_at,content_html,transclusions,pinned,note) VALUES ('00000000000000000000000003',?,'Snapshot','fixture','2020-01-01',?,'[]',?,?)")
   .bind(version, version===1 ? '<p>Legacy pin safety marker</p><img src="/missing" onerror="'+authorityAttack+'">' : '<p>Safe latest safety marker</p>', version===1?1:0,version===1?'Old pin note':'Latest note').run();
 await security.ready;
+// blygcaster: e2e/farcaster.spec.ts gets its own instance and database, with
+// the fake Farcaster backend (FARCASTER_FAKE=1). Its published stubs queue
+// outbound mentions, and a publish drains the whole queue, so sharing the
+// 8787 database would disturb other specs' outbound fixtures.
+const farcaster = new Miniflare({ modules: [{ type: "ESModule", path: "worker.mjs", contents: output.outputFiles[0].text }], compatibilityDate: "2026-07-01", compatibilityFlags: ["nodejs_compat"], host: "127.0.0.1", port: 8793, bindings: { OWNER_PASSWORD: "test-password", COOKIE_SECRET: "farcaster-browser-test-cookie-secret", MOUNT: "", API_READ_LIMIT: "10000", API_WRITE_LIMIT: "10000", FARCASTER_FAKE: "1" }, d1Databases: ["DB"], r2Buckets: ["MEDIA"], outboundService: () => new Response(null, { status: 503 }) });
+const farcasterDb = await farcaster.getD1Database("DB");
+for (const migration of await readD1Migrations("./migrations")) await farcasterDb.batch(migration.queries.map((sql) => farcasterDb.prepare(sql)));
+await farcaster.ready;
 // A separate mounted instance behind the documented forwarding ranges. The
 // proxy rejects host-root assets rather than letting a permissive fixture hide
 // a deployment dependency. Its database and cookies belong to this host only.
