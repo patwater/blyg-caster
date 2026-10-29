@@ -26,6 +26,7 @@ import { FONTS } from '../fonts.ts';
 import { DEFAULT_FEED_ORDER, FEED_ALGORITHMS } from '../feeds/index.ts';
 import { CLIENT } from '../client.ts';
 import { compiledExtensions } from '../../build/extensions.ui.ts';
+import { FARCASTER_SECTION, FarcasterSettingsSection } from './farcaster/settings-section.tsx';
 
 const fields = [
   'site_title',
@@ -764,6 +765,7 @@ function SettingsForm({ initial }: { initial: Settings }) {
         )}
       </section>
       </section>
+      <FarcasterSettingsSection />
       {compiledExtensions.length ? (
         <section className="settings-section" id="extensions" aria-labelledby="extensions-h">
           <h2 className="section-title" id="extensions-h">Extensions</h2>
@@ -821,6 +823,7 @@ const SECTIONS = [
   ['links', 'Links'],
   ['ai', 'AI'],
   ['network', 'Network'],
+  FARCASTER_SECTION,
   ...(compiledExtensions.length ? [['extensions', 'Extensions'] as const] : []),
 ] as const;
 

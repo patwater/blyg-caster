@@ -68,6 +68,7 @@ import { EntryBylineSlot, EntrySheetSlot, entryActionRows, enabledExtensions, ty
 import { compiledExtensions } from '../../build/extensions.ui.ts';
 import { Back, More, ThumbDown, ThumbUp } from './icons.tsx';
 import './reading.css';
+import { castSelection } from './farcaster/selection.ts';
 
 import type { CachedResponse } from './revision-query.ts';
 
@@ -445,7 +446,8 @@ function useEntryActions({
       await changed('signals');
     });
   const stub = () =>
-    source ? run(() => openDraft({ mode: 'response', source })) : undefined;
+    // blygcaster (Q7): a cast is stubbed with the passage selected in it, if any.
+    source ? run(() => openDraft({ mode: 'response', source, ...castSelection(entry.key, source.remote_id) })) : undefined;
   const linkPost = () =>
     void run(() => openDraft({ content_md: `[[${id}]]\n\n`, kind: 'fragment' }));
   const forkPage = () => {

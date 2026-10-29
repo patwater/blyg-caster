@@ -680,7 +680,7 @@ export type FarcasterCast = {
         };
     }>;
     channel: string | null;
-} | null;
+};
 
 export type FarcasterCastRecord = {
     id: string;
@@ -5967,7 +5967,7 @@ export type GetFarcasterThreadResponses = {
      * Success
      */
     200: {
-        cast: FarcasterCast;
+        cast: FarcasterCast | null;
         parents: Array<FarcasterCast>;
         replies: Array<FarcasterCast>;
         /**

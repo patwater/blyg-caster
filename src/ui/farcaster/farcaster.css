@@ -1,0 +1,28 @@
+/* blygcaster: Farcaster settings and the editor's cross-post panel. Studio's
+   own tokens only, so every theme applies. Laid out for iPad first, and one
+   column at phone width. */
+.fc-field { display: grid; gap: 4px; margin: 0 0 12px; }
+.fc-field > span { font-weight: 600; font-size: .92rem; }
+.fc-field input, .fc-field select { width: 100%; box-sizing: border-box; min-height: 44px; }
+.fc-secrets { list-style: none; padding: 0; margin: 0 0 8px; display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: .85rem; }
+.fc-ok { color: var(--pencil); font-weight: 600; }
+.fc-missing { color: var(--ink-soft); }
+.fc-sources { list-style: none; padding: 0; margin: 0 0 12px; }
+.fc-sources li { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 6px 0; border-top: 1px solid var(--rule); }
+.fc-sources li:first-child { border-top: 0; }
+.fc-add { display: grid; grid-template-columns: minmax(7rem, auto) 1fr auto; gap: 8px; align-items: center; }
+.fc-add input, .fc-add select { min-height: 44px; min-width: 0; }
+.fc-add input + input { grid-column: 2 / 3; }
+.fc-quiet { color: var(--pencil); padding: 6px 8px; min-height: 44px; }
+.fc-save { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
+.fc-panel { border: 1px solid var(--rule); border-radius: var(--radius); background: var(--card); padding: 12px 14px; margin: 12px 0; font-size: .92rem; }
+.fc-panel .check { min-height: 44px; display: flex; align-items: center; gap: 8px; }
+.fc-records { list-style: none; padding: 0; margin: 8px 0 0; }
+.fc-records li { padding: 6px 0; border-top: 1px solid var(--rule); overflow-wrap: anywhere; }
+.fc-status { font-weight: 600; text-transform: lowercase; }
+.fc-status[data-status=posted], .fc-status[data-status=deleted] { color: var(--pencil); }
+.fc-status[data-status=failed], .fc-status[data-status=delete_failed] { color: var(--danger, #b42318); }
+@media (max-width: 520px) {
+  .fc-add { grid-template-columns: 1fr; }
+  .fc-add input + input { grid-column: auto; }
+}

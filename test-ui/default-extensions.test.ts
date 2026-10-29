@@ -22,7 +22,8 @@ const EXTENSIONS = JSON.parse(/export const EXTENSIONS = (\[[^\]]*\]) as const;/
 test('releases carry only catalogued, browser-only extensions', () => {
   expect(EXTENSIONS).toContain('reading-time');
   const shipped = (JSON.parse(readFileSync('extensions.json', 'utf8')) as { compile: string[] }).compile;
-  expect(shipped).toEqual(['inspect', 'reading-time']);
+  // blygcaster ships its browser-only Farcaster reader tools too.
+  expect(shipped).toEqual(['farcaster', 'inspect', 'reading-time']);
   for (const name of shipped) {
     expect(EXTENSIONS).toContain(name);
     expect(existsSync(`extensions/${name}/server.ts`), `${name} has a server half and cannot ship in releases`).toBe(false);

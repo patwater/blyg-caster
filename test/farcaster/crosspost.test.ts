@@ -60,7 +60,7 @@ describe("cross-posting", () => {
 
   it("never fails a publish when the cast fails, and retries it later", async () => {
     const cookie = await login();
-    const id = await optedInDraft(cookie, "Published whatever Farcaster says.");
+    const id = await optedInDraft(cookie, "Published whatever the network says.");
     sink.failures = [new FarcasterError("http", "HTTP 503", 503)];
     const res = await apiJson(cookie, "POST", `/api/items/${id}/publish`, {});
     expect(res.status).toBe(200);
@@ -110,6 +110,24 @@ describe("cross-posting", () => {
     expect(records.find((r) => r.version === 2)).toMatchObject({ status: "posted", text: "Second words." });
     expect(sink.calls.filter((c) => c.op === "delete").map((c) => c.hash)).toEqual([first.cast_hash]);
     expect(sink.live.size).toBe(1);
+  });
+
+  it("links a permalink page to its live cast, and nowhere else (Q19)", async () => {
+    const cookie = await login();
+    const id = await optedInDraft(cookie, "Linked from the page.");
+    await apiJson(cookie, "POST", `/api/items/${id}/publish`, {});
+    const [posted] = await settled(cookie, id, (r) => r[0]?.status === "posted");
+    const page = await (await getPublic(`/blyg/f/${id}/`)).text();
+    expect(page).toContain(`<p class="also-elsewhere"><a href="https://farcaster.xyz/~/conversations/${posted.cast_hash}" rel="noopener">Also on Farcaster ↗</a></p>`);
+    const doc = await (await getPublic(`/blyg/items/${id}.json`)).text();
+    const feed = await (await getPublic("/blyg/feed.xml")).text();
+    const manifest = await (await getPublic("/blyg/blyg.json")).text();
+    // The cast record is client-private: its hash and the page's link are on no wire surface.
+    for (const surface of [doc, feed, manifest]) {
+      expect(surface).not.toContain(posted.cast_hash!);
+      expect(surface).not.toContain("Also on Farcaster");
+    }
+    expect(Object.keys(JSON.parse(doc)).filter((k) => /farcaster|cast/i.test(k))).toEqual([]);
   });
 
   it("deletes the cast when the item is withdrawn", async () => {

@@ -19,6 +19,7 @@ import type { ItemRow, MediaRow, Settings, SubscriptionRow, Transclusion, Versio
 import { loadFeedData, sourceKey, type FeedCardData, type FeedProvenance, type FeedItem } from "./public-feed.ts";
 import { WEBMENTION_PATH } from "./types.ts";
 import { escapeHtml, escapeHref, formatDateIn, unplacedMedia, visibleMedia } from "./util.ts";
+import { farcasterPermalinkLine } from "./farcaster/permalink.ts";
 import { graphemePrefix } from "./text.ts";
 import { EMBED_CSS, EMBED_SCRIPT } from "./embeds.ts";
 
@@ -1896,6 +1897,7 @@ export async function permalinkPage(db: D1Database, settings: Settings, item: It
   const media = await listVersionMedia(db, item.id, item.version);
   const head = itemHead(latest?.content_html ?? "", settings);
   const body = `${await blygPage(db, settings, mount, `${await fragmentBlock(db, item, mount, settings.timezone)}
+${await farcasterPermalinkLine(db, item.id)}
 ${await localMentionsSection(db, item, settings, mount, origin)}
 ${await responsesSection(db, item, settings, mount)}`)}
 <script>${VERSION_NAV_SCRIPT}</script>`;
@@ -1932,6 +1934,7 @@ export async function threadPage(db: D1Database, settings: Settings, item: ItemR
   const media = await listVersionMedia(db, item.id, item.version);
   const head = itemHead(latest?.content_html ?? "", settings, respondsToLabel(latest));
   const body = `${await blygPage(db, settings, mount, `${await threadBlock(db, item, mount, settings.timezone)}
+${await farcasterPermalinkLine(db, item.id)}
 ${await localMentionsSection(db, item, settings, mount, origin)}
 ${await responsesSection(db, item, settings, mount)}`)}
 <script>${VERSION_NAV_SCRIPT}</script>`;

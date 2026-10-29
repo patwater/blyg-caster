@@ -1,0 +1,18 @@
+/* farcaster extension: reader byline, thread sheet, cast log. */
+.fc-inline { background: none; border: 0; padding: 4px 2px; margin: 0; font: inherit; color: var(--pencil); cursor: pointer; min-height: 0; text-decoration: underline; text-underline-offset: 2px; }
+.fc-stubbed { font-weight: 600; }
+.fc-thread { display: grid; gap: 10px; }
+.fc-cast { border-left: 3px solid var(--rule); padding: 4px 0 4px 12px; overflow-wrap: anywhere; }
+.fc-cast.fc-focus { border-left-color: var(--pencil); }
+.fc-cast-by { margin: 0 0 4px; font-size: .85rem; color: var(--ink-soft); }
+.fc-cast-by a { font-weight: 600; color: inherit; }
+.fc-cast-text { margin: 0; white-space: pre-wrap; }
+.fc-cast-img { display: block; max-width: 100%; height: auto; border-radius: 8px; margin-top: 6px; }
+.fc-cast-link { margin: 4px 0 0; font-size: .85rem; }
+.fc-replies-h { font-size: .85rem; margin: 6px 0 0; color: var(--ink-soft); }
+.fc-note { color: var(--ink-soft); font-size: .85rem; }
+.fc-log { max-width: 46rem; }
+.fc-log-list { list-style: none; padding: 0; margin: 0; }
+.fc-log-list li { border-top: 1px solid var(--rule); padding: 10px 0; overflow-wrap: anywhere; }
+.fc-log-list p { margin: 0 0 4px; }
+.fc-log-text { white-space: pre-wrap; color: var(--ink-soft); font-size: .9rem; }

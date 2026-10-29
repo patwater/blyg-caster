@@ -48,6 +48,7 @@ import { OcrScan } from './ocr.tsx';
 import { addStubQuote, passageCount, stubQuoteForm, withStubQuote } from './stub-quote.ts';
 import { Image as ImageIcon, LinkIcon, More, Scan, Sparkle, Swap } from './icons.tsx';
 import './authoring.css';
+import { FarcasterPanel } from './farcaster/editor-panel.tsx';
 
 type Kind = 'fragment' | 'thread';
 type Row = ListItemsResponses[200]['items'][number];
@@ -1914,6 +1915,7 @@ function Editor({ item }: { item: Detail }) {
           fork of {item.forked_from.id} v{item.forked_from.version}
         </p>
       ) : null}
+      <FarcasterPanel item={item} />
       <div className="segmented compact pane-toggle" role="group" aria-label="pane">
         {(['draft', 'preview'] as const).map((value) => (
           <button

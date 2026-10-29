@@ -630,7 +630,7 @@ export const zFarcasterCast = z.object({
         })
     ])),
     channel: z.string().nullable()
-}).nullable();
+});
 
 export const zFarcasterCastRecord = z.object({
     id: z.string(),
@@ -1777,7 +1777,7 @@ export const zGetFarcasterThreadQuery = z.object({
  * Success
  */
 export const zGetFarcasterThreadResponse = z.object({
-    cast: zFarcasterCast,
+    cast: zFarcasterCast.nullable(),
     parents: z.array(zFarcasterCast),
     replies: z.array(zFarcasterCast),
     error: z.string().optional()

@@ -101,7 +101,7 @@ export const farcasterRoutes = {
     "getFarcasterThread",
     "get",
     "/farcaster/thread",
-    z.object({ cast: CastSchema.nullable(), parents: z.array(CastSchema), replies: z.array(CastSchema), error: z.string().optional().describe("Part of the thread could not be read; what is here is what could.") }),
+    z.object({ cast: z.union([CastSchema, z.null()]), parents: z.array(CastSchema), replies: z.array(CastSchema), error: z.string().optional().describe("Part of the thread could not be read; what is here is what could.") }),
     undefined,
     200,
     z.object({ fid: z.coerce.number().int().positive(), hash: z.string().regex(/^0x[0-9a-f]{40}$/) }),

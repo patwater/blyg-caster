@@ -2538,10 +2538,7 @@
         ]
       },
       "FarcasterCast": {
-        "type": [
-          "object",
-          "null"
-        ],
+        "type": "object",
         "properties": {
           "fid": {
             "type": "integer",
@@ -15766,7 +15763,14 @@
                   "type": "object",
                   "properties": {
                     "cast": {
-                      "$ref": "#/components/schemas/FarcasterCast"
+                      "anyOf": [
+                        {
+                          "$ref": "#/components/schemas/FarcasterCast"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
                     },
                     "parents": {
                       "type": "array",
