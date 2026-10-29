@@ -32,7 +32,7 @@ import { CLIENT } from "./client.ts";
 import type { Settings } from "./types.ts";
 
 /** GitHub publishes one of these per repo, no auth required. */
-export const DEFAULT_UPDATE_FEED = "https://github.com/blygger/blygger-studio/releases.atom";
+export const DEFAULT_UPDATE_FEED = `${CLIENT.url}/releases.atom`;
 
 /** Don't ask more than once a day. A release is not an urgent event. */
 export const CHECK_INTERVAL_MS = 24 * 60 * 60 * 1000;

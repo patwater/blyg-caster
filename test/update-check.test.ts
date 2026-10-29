@@ -110,7 +110,7 @@ describe("fetchLatest never throws", () => {
     expect(await fetchLatest({ update_feed_url: "" }, spy)).toBe("0.7.0");
     // No query string, and a user-agent naming the software, not the node.
     expect(String(seen)).not.toContain("?");
-    expect(String((init?.headers as Record<string, string>)["user-agent"])).toMatch(/^blygger-studio\//);
+    expect(String((init?.headers as Record<string, string>)["user-agent"])).toMatch(/^blygcaster\//);
   });
 
   it("uses a configured feed, so a fork checks its own releases", async () => {

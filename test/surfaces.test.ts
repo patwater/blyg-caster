@@ -27,9 +27,9 @@ describe("manifest (§2.4)", () => {
     // client's actual identity, in the `name/semver` shape the directory
     // census parses — both of which are checked here.
     expect(m.generator).toBe(GENERATOR);
-    expect(m.generator).toMatch(/^blygger-studio\/\d+\.\d+\.\d+$/);
+    expect(m.generator).toMatch(/^blygcaster\/\d+\.\d+\.\d+$/);
     expect(GENERATOR).toBe(`${CLIENT.name}/${CLIENT.version}`);
-    expect(m.generator_url).toBe("https://github.com/blygger/blygger-studio");
+    expect(m.generator_url).toBe("https://github.com/patwater/blyg-caster");
     expect(m.site).toBe("https://example.com/blyg/");
     expect(m.title).toBe("A Test Blyg");
     expect(m.author.name).toBe("A Test Author");

@@ -5,6 +5,7 @@ import { z } from 'zod';
 import type { RouteConfig } from '@hono/zod-openapi';
 import type { Context } from 'hono';
 import type { Env } from './types.ts';
+import { CLIENT } from './client.ts';
 import { routes } from './contract/routes.ts';
 import { createOwnerApi } from './owner-api.ts';
 import { verifyBearer, bearerChallenge, authLocations } from './oauth.ts';
@@ -58,7 +59,7 @@ export async function serveMcp(request: Request, env: Env, ctx: Context['executi
 export async function serveAuthorizedMcp(request: Request, env: Env, ctx: Context['executionCtx'], access: OwnerAccess) {
   const api = new Hono<{ Bindings: Env }>().route('/api', createOwnerApi(access));
   const handler = createMcpHandler(() => {
-    const server = new McpServer({ name: 'blygger-studio', version: '1.0.0' });
+    const server = new McpServer({ name: CLIENT.name, version: '1.0.0' });
     const visibleTools: Tool[] = [];
     for (const { name, route, inputSchema, description, annotations, scopes, wireSchema } of toolDefinitions) {
       if (scopes.every(scope => access.scope.includes(scope))) {

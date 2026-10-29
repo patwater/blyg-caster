@@ -15,7 +15,7 @@
   // configure an instance — if it does, that is a bug in the client, because
   // it would break your upgrade path. Report it.
 
-  "name": "blyg",
+  "name": "blygcaster",
   "main": "src/index.ts",
   "compatibility_date": "2026-07-01",
 

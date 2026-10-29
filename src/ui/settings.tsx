@@ -376,7 +376,7 @@ function SettingsForm({ initial }: { initial: Settings }) {
           'update_feed_url',
           'Release feed (blank = this client’s own)',
           false,
-          'https://github.com/blygger/blygger-studio/releases.atom',
+          CLIENT.url + '/releases.atom',
         )}
         <p className="hint">
           Only change this if you have modified the client and track your own
