@@ -219,7 +219,7 @@ export type CustomTheme = {
 
 export type Subscription = {
     id: string;
-    kind: 'blyg' | 'rss';
+    kind: 'blyg' | 'rss' | 'farcaster';
     origin: string;
     feed_url: string;
     title: string;
@@ -603,6 +603,126 @@ export type LineageGlyphSummary = {
         transclusion: number;
         fork: number;
     };
+};
+
+export type FarcasterStatus = {
+    settings: FarcasterSettings;
+    /**
+     * Whether each Worker secret is set. Never a value.
+     */
+    secrets: {
+        FARCASTER_SIGNER_KEY: boolean;
+        FARCASTER_HUB_API_KEY: boolean;
+        NEYNAR_API_KEY: boolean;
+        NEYNAR_SIGNER_UUID: boolean;
+    };
+    /**
+     * The in-memory fake backend is selected (FARCASTER_FAKE=1, local development only).
+     */
+    fake: boolean;
+};
+
+export type FarcasterSettings = {
+    /**
+     * The owner's FID: the account cross-posts are cast from.
+     */
+    fid: number | null;
+    read_backend: 'hub' | 'neynar';
+    write_backend: 'hub' | 'neynar';
+    /**
+     * A Snapchain node's HTTP API, e.g. https://hub.example.com:3381. Empty until set.
+     */
+    hub_url: string;
+    /**
+     * How a cast's web page is built: {handle}, {fid}, {hash}, {shortHash}. Display only.
+     */
+    cast_url_template: string;
+    /**
+     * The kill switch. False: nothing is cast or deleted.
+     */
+    crosspost_enabled: boolean;
+    /**
+     * Every cross-post goes to this channel; empty for none.
+     */
+    crosspost_channel_id: string;
+    /**
+     * The channel's parent URL, which the hub backend needs.
+     */
+    crosspost_channel_parent_url: string;
+    /**
+     * Appended to a cast whose item discloses generated text.
+     */
+    ai_note: string;
+};
+
+export type FarcasterCast = {
+    fid: number;
+    hash: string;
+    handle: string | null;
+    displayName: string | null;
+    text: string;
+    createdAt: string;
+    url: string;
+    parentHash: string | null;
+    parentFid: number | null;
+    parentUrl: string | null;
+    embeds: Array<{
+        type: 'image';
+        url: string;
+    } | {
+        type: 'link';
+        url: string;
+    } | {
+        type: 'cast';
+        cast: {
+            fid: number;
+            hash: string;
+        };
+    }>;
+    channel: string | null;
+} | null;
+
+export type FarcasterCastRecord = {
+    id: string;
+    item_id: string;
+    version: number;
+    purpose: 'crosspost' | 'reply';
+    status: 'pending' | 'posted' | 'failed' | 'cancelled' | 'deleting' | 'deleted' | 'skipped' | 'delete_failed';
+    cast_hash: string | null;
+    /**
+     * The cast's web page, from the URL template. Display only.
+     */
+    cast_url: string | null;
+    /**
+     * What was, or will be, cast.
+     */
+    text: string;
+    attempts: number;
+    next_attempt_at: string | null;
+    last_error: string | null;
+    backend: string | null;
+    created: string;
+    updated: string;
+};
+
+export type FarcasterItem = {
+    /**
+     * This item is cross-posted when published. Off by default.
+     */
+    enabled: boolean;
+    /**
+     * The cast this item stubs, when it was made from one.
+     */
+    stub: {
+        fid: number;
+        hash: string;
+        url: string;
+    } | null;
+    /**
+     * The reply offer applies: a published stub of a cast with no reply recorded.
+     */
+    can_reply: boolean;
+    records: Array<FarcasterCastRecord>;
 };
 
 export type RevokeAllAuthorizationsData = {
@@ -5530,3 +5650,704 @@ export type ExtLineageGlyphListSummariesResponses = {
 };
 
 export type ExtLineageGlyphListSummariesResponse = ExtLineageGlyphListSummariesResponses[keyof ExtLineageGlyphListSummariesResponses];
+
+export type GetFarcasterSettingsData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/farcaster/settings';
+};
+
+export type GetFarcasterSettingsErrors = {
+    /**
+     * Request failed
+     */
+    400: ApiError;
+    /**
+     * Request failed
+     */
+    401: ApiError;
+    /**
+     * Request failed
+     */
+    403: ApiError;
+    /**
+     * Request failed
+     */
+    404: ApiError;
+    /**
+     * Request failed
+     */
+    405: ApiError;
+    /**
+     * Request failed
+     */
+    409: ApiError;
+    /**
+     * Request failed
+     */
+    413: ApiError;
+    /**
+     * Request failed
+     */
+    415: ApiError;
+    /**
+     * Request failed
+     */
+    422: ApiError;
+    /**
+     * Request failed
+     */
+    429: ApiError;
+    /**
+     * Request failed
+     */
+    500: ApiError;
+    /**
+     * Request failed
+     */
+    502: ApiError;
+};
+
+export type GetFarcasterSettingsError = GetFarcasterSettingsErrors[keyof GetFarcasterSettingsErrors];
+
+export type GetFarcasterSettingsResponses = {
+    /**
+     * Success
+     */
+    200: FarcasterStatus;
+};
+
+export type GetFarcasterSettingsResponse = GetFarcasterSettingsResponses[keyof GetFarcasterSettingsResponses];
+
+export type UpdateFarcasterSettingsData = {
+    body: {
+        /**
+         * The owner's FID: the account cross-posts are cast from.
+         */
+        fid?: number | null;
+        read_backend?: 'hub' | 'neynar';
+        write_backend?: 'hub' | 'neynar';
+        /**
+         * A Snapchain node's HTTP API, e.g. https://hub.example.com:3381. Empty until set.
+         */
+        hub_url?: string;
+        /**
+         * How a cast's web page is built: {handle}, {fid}, {hash}, {shortHash}. Display only.
+         */
+        cast_url_template?: string;
+        /**
+         * The kill switch. False: nothing is cast or deleted.
+         */
+        crosspost_enabled?: boolean;
+        /**
+         * Every cross-post goes to this channel; empty for none.
+         */
+        crosspost_channel_id?: string;
+        /**
+         * The channel's parent URL, which the hub backend needs.
+         */
+        crosspost_channel_parent_url?: string;
+        /**
+         * Appended to a cast whose item discloses generated text.
+         */
+        ai_note?: string;
+    };
+    path?: never;
+    query?: never;
+    url: '/api/farcaster/settings';
+};
+
+export type UpdateFarcasterSettingsErrors = {
+    /**
+     * Request failed
+     */
+    400: ApiError;
+    /**
+     * Request failed
+     */
+    401: ApiError;
+    /**
+     * Request failed
+     */
+    403: ApiError;
+    /**
+     * Request failed
+     */
+    404: ApiError;
+    /**
+     * Request failed
+     */
+    405: ApiError;
+    /**
+     * Request failed
+     */
+    409: ApiError;
+    /**
+     * Request failed
+     */
+    413: ApiError;
+    /**
+     * Request failed
+     */
+    415: ApiError;
+    /**
+     * Request failed
+     */
+    422: ApiError;
+    /**
+     * Request failed
+     */
+    429: ApiError;
+    /**
+     * Request failed
+     */
+    500: ApiError;
+    /**
+     * Request failed
+     */
+    502: ApiError;
+};
+
+export type UpdateFarcasterSettingsError = UpdateFarcasterSettingsErrors[keyof UpdateFarcasterSettingsErrors];
+
+export type UpdateFarcasterSettingsResponses = {
+    /**
+     * Success
+     */
+    200: FarcasterStatus;
+};
+
+export type UpdateFarcasterSettingsResponse = UpdateFarcasterSettingsResponses[keyof UpdateFarcasterSettingsResponses];
+
+export type AddFarcasterSourceData = {
+    body: {
+        kind: 'account' | 'channel';
+        /**
+         * An account: its FID or @handle. A channel: its id.
+         */
+        value: string;
+        /**
+         * A channel's parent URL, which the hub backend needs.
+         */
+        parent_url?: string;
+    };
+    path?: never;
+    query?: never;
+    url: '/api/farcaster/sources';
+};
+
+export type AddFarcasterSourceErrors = {
+    /**
+     * Request failed
+     */
+    400: ApiError;
+    /**
+     * Request failed
+     */
+    401: ApiError;
+    /**
+     * Request failed
+     */
+    403: ApiError;
+    /**
+     * Request failed
+     */
+    404: ApiError;
+    /**
+     * Request failed
+     */
+    405: ApiError;
+    /**
+     * Request failed
+     */
+    409: ApiError;
+    /**
+     * Request failed
+     */
+    413: ApiError;
+    /**
+     * Request failed
+     */
+    415: ApiError;
+    /**
+     * Request failed
+     */
+    422: ApiError;
+    /**
+     * Request failed
+     */
+    429: ApiError;
+    /**
+     * Request failed
+     */
+    500: ApiError;
+    /**
+     * Request failed
+     */
+    502: ApiError;
+};
+
+export type AddFarcasterSourceError = AddFarcasterSourceErrors[keyof AddFarcasterSourceErrors];
+
+export type AddFarcasterSourceResponses = {
+    /**
+     * Success
+     */
+    201: Subscription;
+};
+
+export type AddFarcasterSourceResponse = AddFarcasterSourceResponses[keyof AddFarcasterSourceResponses];
+
+export type GetFarcasterThreadData = {
+    body?: never;
+    path?: never;
+    query: {
+        fid: number;
+        hash: string;
+    };
+    url: '/api/farcaster/thread';
+};
+
+export type GetFarcasterThreadErrors = {
+    /**
+     * Request failed
+     */
+    400: ApiError;
+    /**
+     * Request failed
+     */
+    401: ApiError;
+    /**
+     * Request failed
+     */
+    403: ApiError;
+    /**
+     * Request failed
+     */
+    404: ApiError;
+    /**
+     * Request failed
+     */
+    405: ApiError;
+    /**
+     * Request failed
+     */
+    409: ApiError;
+    /**
+     * Request failed
+     */
+    413: ApiError;
+    /**
+     * Request failed
+     */
+    415: ApiError;
+    /**
+     * Request failed
+     */
+    422: ApiError;
+    /**
+     * Request failed
+     */
+    429: ApiError;
+    /**
+     * Request failed
+     */
+    500: ApiError;
+    /**
+     * Request failed
+     */
+    502: ApiError;
+};
+
+export type GetFarcasterThreadError = GetFarcasterThreadErrors[keyof GetFarcasterThreadErrors];
+
+export type GetFarcasterThreadResponses = {
+    /**
+     * Success
+     */
+    200: {
+        cast: FarcasterCast;
+        parents: Array<FarcasterCast>;
+        replies: Array<FarcasterCast>;
+        /**
+         * Part of the thread could not be read; what is here is what could.
+         */
+        error?: string;
+    };
+};
+
+export type GetFarcasterThreadResponse = GetFarcasterThreadResponses[keyof GetFarcasterThreadResponses];
+
+export type ListFarcasterStubsData = {
+    body?: never;
+    path?: never;
+    query: {
+        /**
+         * Comma-separated fid:hash pairs.
+         */
+        casts: string;
+    };
+    url: '/api/farcaster/stubs';
+};
+
+export type ListFarcasterStubsErrors = {
+    /**
+     * Request failed
+     */
+    400: ApiError;
+    /**
+     * Request failed
+     */
+    401: ApiError;
+    /**
+     * Request failed
+     */
+    403: ApiError;
+    /**
+     * Request failed
+     */
+    404: ApiError;
+    /**
+     * Request failed
+     */
+    405: ApiError;
+    /**
+     * Request failed
+     */
+    409: ApiError;
+    /**
+     * Request failed
+     */
+    413: ApiError;
+    /**
+     * Request failed
+     */
+    415: ApiError;
+    /**
+     * Request failed
+     */
+    422: ApiError;
+    /**
+     * Request failed
+     */
+    429: ApiError;
+    /**
+     * Request failed
+     */
+    500: ApiError;
+    /**
+     * Request failed
+     */
+    502: ApiError;
+};
+
+export type ListFarcasterStubsError = ListFarcasterStubsErrors[keyof ListFarcasterStubsErrors];
+
+export type ListFarcasterStubsResponses = {
+    /**
+     * Success
+     */
+    200: {
+        items: Array<{
+            fid: number;
+            hash: string;
+            item_id: string;
+            status: 'draft' | 'public' | 'withdrawn';
+        }>;
+    };
+};
+
+export type ListFarcasterStubsResponse = ListFarcasterStubsResponses[keyof ListFarcasterStubsResponses];
+
+export type ListFarcasterCastsData = {
+    body?: never;
+    path?: never;
+    query?: {
+        offset?: number | null;
+        limit?: number;
+    };
+    url: '/api/farcaster/casts';
+};
+
+export type ListFarcasterCastsErrors = {
+    /**
+     * Request failed
+     */
+    400: ApiError;
+    /**
+     * Request failed
+     */
+    401: ApiError;
+    /**
+     * Request failed
+     */
+    403: ApiError;
+    /**
+     * Request failed
+     */
+    404: ApiError;
+    /**
+     * Request failed
+     */
+    405: ApiError;
+    /**
+     * Request failed
+     */
+    409: ApiError;
+    /**
+     * Request failed
+     */
+    413: ApiError;
+    /**
+     * Request failed
+     */
+    415: ApiError;
+    /**
+     * Request failed
+     */
+    422: ApiError;
+    /**
+     * Request failed
+     */
+    429: ApiError;
+    /**
+     * Request failed
+     */
+    500: ApiError;
+    /**
+     * Request failed
+     */
+    502: ApiError;
+};
+
+export type ListFarcasterCastsError = ListFarcasterCastsErrors[keyof ListFarcasterCastsErrors];
+
+export type ListFarcasterCastsResponses = {
+    /**
+     * Success
+     */
+    200: {
+        items: Array<FarcasterCastRecord>;
+        total: number;
+        offset: number;
+        limit: number;
+    };
+};
+
+export type ListFarcasterCastsResponse = ListFarcasterCastsResponses[keyof ListFarcasterCastsResponses];
+
+export type GetFarcasterItemData = {
+    body?: never;
+    path: {
+        id: string;
+    };
+    query?: never;
+    url: '/api/farcaster/items/{id}';
+};
+
+export type GetFarcasterItemErrors = {
+    /**
+     * Request failed
+     */
+    400: ApiError;
+    /**
+     * Request failed
+     */
+    401: ApiError;
+    /**
+     * Request failed
+     */
+    403: ApiError;
+    /**
+     * Request failed
+     */
+    404: ApiError;
+    /**
+     * Request failed
+     */
+    405: ApiError;
+    /**
+     * Request failed
+     */
+    409: ApiError;
+    /**
+     * Request failed
+     */
+    413: ApiError;
+    /**
+     * Request failed
+     */
+    415: ApiError;
+    /**
+     * Request failed
+     */
+    422: ApiError;
+    /**
+     * Request failed
+     */
+    429: ApiError;
+    /**
+     * Request failed
+     */
+    500: ApiError;
+    /**
+     * Request failed
+     */
+    502: ApiError;
+};
+
+export type GetFarcasterItemError = GetFarcasterItemErrors[keyof GetFarcasterItemErrors];
+
+export type GetFarcasterItemResponses = {
+    /**
+     * Success
+     */
+    200: FarcasterItem;
+};
+
+export type GetFarcasterItemResponse = GetFarcasterItemResponses[keyof GetFarcasterItemResponses];
+
+export type SetFarcasterCrosspostData = {
+    body: {
+        enabled: boolean;
+    };
+    path: {
+        id: string;
+    };
+    query?: never;
+    url: '/api/farcaster/items/{id}/crosspost';
+};
+
+export type SetFarcasterCrosspostErrors = {
+    /**
+     * Request failed
+     */
+    400: ApiError;
+    /**
+     * Request failed
+     */
+    401: ApiError;
+    /**
+     * Request failed
+     */
+    403: ApiError;
+    /**
+     * Request failed
+     */
+    404: ApiError;
+    /**
+     * Request failed
+     */
+    405: ApiError;
+    /**
+     * Request failed
+     */
+    409: ApiError;
+    /**
+     * Request failed
+     */
+    413: ApiError;
+    /**
+     * Request failed
+     */
+    415: ApiError;
+    /**
+     * Request failed
+     */
+    422: ApiError;
+    /**
+     * Request failed
+     */
+    429: ApiError;
+    /**
+     * Request failed
+     */
+    500: ApiError;
+    /**
+     * Request failed
+     */
+    502: ApiError;
+};
+
+export type SetFarcasterCrosspostError = SetFarcasterCrosspostErrors[keyof SetFarcasterCrosspostErrors];
+
+export type SetFarcasterCrosspostResponses = {
+    /**
+     * Success
+     */
+    200: FarcasterItem;
+};
+
+export type SetFarcasterCrosspostResponse = SetFarcasterCrosspostResponses[keyof SetFarcasterCrosspostResponses];
+
+export type ReplyOnFarcasterData = {
+    body?: never;
+    path: {
+        id: string;
+    };
+    query?: never;
+    url: '/api/farcaster/items/{id}/reply';
+};
+
+export type ReplyOnFarcasterErrors = {
+    /**
+     * Request failed
+     */
+    400: ApiError;
+    /**
+     * Request failed
+     */
+    401: ApiError;
+    /**
+     * Request failed
+     */
+    403: ApiError;
+    /**
+     * Request failed
+     */
+    404: ApiError;
+    /**
+     * Request failed
+     */
+    405: ApiError;
+    /**
+     * Request failed
+     */
+    409: ApiError;
+    /**
+     * Request failed
+     */
+    413: ApiError;
+    /**
+     * Request failed
+     */
+    415: ApiError;
+    /**
+     * Request failed
+     */
+    422: ApiError;
+    /**
+     * Request failed
+     */
+    429: ApiError;
+    /**
+     * Request failed
+     */
+    500: ApiError;
+    /**
+     * Request failed
+     */
+    502: ApiError;
+};
+
+export type ReplyOnFarcasterError = ReplyOnFarcasterErrors[keyof ReplyOnFarcasterErrors];
+
+export type ReplyOnFarcasterResponses = {
+    /**
+     * Success
+     */
+    201: FarcasterItem;
+};
+
+export type ReplyOnFarcasterResponse = ReplyOnFarcasterResponses[keyof ReplyOnFarcasterResponses];

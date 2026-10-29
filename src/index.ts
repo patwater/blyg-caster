@@ -32,6 +32,7 @@ import { mentionFetchFor } from "./mentions/http.ts";
 import { receiveMention, verifyMention } from "./mentions/receive.ts";
 
 import { drainOutbound } from "./mentions/send.ts";
+import { drainCasts } from "./farcaster/crosspost.ts";
 import { pruneFailedInbound } from "./mentions/store.ts";
 import type { Env, Settings } from "./types.ts";
 import { FEED_PAGE_SIZE, WEBMENTION_PATH } from "./types.ts";
@@ -409,9 +410,11 @@ export default {
     // Both jobs are idempotent: an install with both crons runs them twice.
     const at = new Date(controller.scheduledTime);
     if (at.getUTCHours() === 0 && at.getUTCMinutes() < 15) daily();
-    ctx.waitUntil(runScheduledPoll(env.DB, platformFetchFor(env)));
+    ctx.waitUntil(runScheduledPoll(env.DB, platformFetchFor(env), Date.now(), env));
     // Outbound mentions retry here (§2.3.4): the publish path tries once
     // immediately, and a receiver that was down gets it on a later tick.
     ctx.waitUntil(drainOutbound(env.DB, mentionFetchFor(env)).catch(() => {}));
+    // blygcaster: Farcaster casts retry on this tick (15 m, 1 h, 4 h, 12 h, 24 h).
+    ctx.waitUntil(drainCasts(env).catch(() => {}));
   },
 };

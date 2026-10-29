@@ -2,7 +2,7 @@
 
 import { client } from './client.gen.js';
 import { type Client, type ClientMeta, formDataBodySerializer, type Options as Options2, type RequestResult, type TDataShape } from './client/index.js';
-import type { AddHopperItemData, AddHopperItemErrors, AddHopperItemResponses, ClassifyChangeData, ClassifyChangeErrors, ClassifyChangeResponses, CreateAuthorizationData, CreateAuthorizationErrors, CreateAuthorizationResponses, CreateHopperData, CreateHopperErrors, CreateHopperResponses, CreateItemData, CreateItemErrors, CreateItemResponses, CreateSubscriptionData, CreateSubscriptionErrors, CreateSubscriptionResponses, DeleteHopperData, DeleteHopperErrors, DeleteHopperResponses, DeleteItemData, DeleteItemErrors, DeleteItemResponses, DeleteMediaData, DeleteMediaErrors, DeleteMediaResponses, DeleteSignalData, DeleteSignalErrors, DeleteSignalResponses, DeleteSubscriptionData, DeleteSubscriptionErrors, DeleteSubscriptionResponses, DraftNoteData, DraftNoteErrors, DraftNoteResponses, ExtLineageGlyphGetLineageData, ExtLineageGlyphGetLineageErrors, ExtLineageGlyphGetLineageResponses, ExtLineageGlyphListSummariesData, ExtLineageGlyphListSummariesErrors, ExtLineageGlyphListSummariesResponses, GenerateItemData, GenerateItemErrors, GenerateItemResponses, GetAiModelsData, GetAiModelsErrors, GetAiModelsResponses, GetChangesData, GetChangesErrors, GetChangesResponses, GetForkOptionsData, GetForkOptionsErrors, GetForkOptionsResponses, GetHopperData, GetHopperErrors, GetHopperResponses, GetImportedHistoryData, GetImportedHistoryErrors, GetImportedHistoryResponses, GetImportedItemData, GetImportedItemErrors, GetImportedItemResponses, GetImportedVersionData, GetImportedVersionErrors, GetImportedVersionResponses, GetItemData, GetItemErrors, GetItemFreshnessData, GetItemFreshnessErrors, GetItemFreshnessResponses, GetItemResponses, GetMentionSourceData, GetMentionSourceErrors, GetMentionSourceResponses, GetSettingsData, GetSettingsErrors, GetSettingsResponses, GetSubscriptionData, GetSubscriptionErrors, GetSubscriptionResponses, GetUpdateStateData, GetUpdateStateErrors, GetUpdateStateResponses, GetVersionData, GetVersionErrors, GetVersionResponses, ListAuthorizationsData, ListAuthorizationsErrors, ListAuthorizationsResponses, ListHoppersData, ListHoppersErrors, ListHoppersResponses, ListImportedReadingData, ListImportedReadingErrors, ListImportedReadingResponses, ListInteractionsData, ListInteractionsErrors, ListInteractionsResponses, ListItemsData, ListItemsErrors, ListItemsResponses, ListMentionsData, ListMentionsErrors, ListMentionsResponses, ListReadingData, ListReadingErrors, ListReadingResponses, ListSignalsData, ListSignalsErrors, ListSignalsResponses, ListStaleThreadsData, ListStaleThreadsErrors, ListStaleThreadsResponses, ListSubscriptionsData, ListSubscriptionsErrors, ListSubscriptionsResponses, ListThumbsData, ListThumbsErrors, ListThumbsResponses, MarkReadBatchData, MarkReadBatchErrors, MarkReadBatchResponses, MarkReadData, MarkReadErrors, MarkReadResponses, MarkUnreadBatchData, MarkUnreadBatchErrors, MarkUnreadBatchResponses, MarkUnreadData, MarkUnreadErrors, MarkUnreadResponses, PinItemData, PinItemErrors, PinItemResponses, PollAllSubscriptionsData, PollAllSubscriptionsErrors, PollAllSubscriptionsResponses, PreviewData, PreviewErrors, PreviewResponses, PublishItemData, PublishItemErrors, PublishItemResponses, RefreshItemData, RefreshItemErrors, RefreshItemResponses, RemoveHopperItemData, RemoveHopperItemErrors, RemoveHopperItemResponses, RestoreItemData, RestoreItemErrors, RestoreItemResponses, ResyncSubscriptionData, ResyncSubscriptionErrors, ResyncSubscriptionResponses, RevokeAllAuthorizationsData, RevokeAllAuthorizationsErrors, RevokeAllAuthorizationsResponses, RevokeAuthorizationData, RevokeAuthorizationErrors, RevokeAuthorizationResponses, SearchData, SearchErrors, SearchResponses, SetSignalData, SetSignalErrors, SetSignalResponses, UpdateHopperData, UpdateHopperErrors, UpdateHopperResponses, UpdateItemData, UpdateItemErrors, UpdateItemResponses, UpdateMentionData, UpdateMentionErrors, UpdateMentionResponses, UpdateSettingsData, UpdateSettingsErrors, UpdateSettingsResponses, UpdateSubscriptionData, UpdateSubscriptionErrors, UpdateSubscriptionResponses, UploadMediaData, UploadMediaErrors, UploadMediaResponses, WithdrawItemData, WithdrawItemErrors, WithdrawItemResponses } from './types.gen.js';
+import type { AddFarcasterSourceData, AddFarcasterSourceErrors, AddFarcasterSourceResponses, AddHopperItemData, AddHopperItemErrors, AddHopperItemResponses, ClassifyChangeData, ClassifyChangeErrors, ClassifyChangeResponses, CreateAuthorizationData, CreateAuthorizationErrors, CreateAuthorizationResponses, CreateHopperData, CreateHopperErrors, CreateHopperResponses, CreateItemData, CreateItemErrors, CreateItemResponses, CreateSubscriptionData, CreateSubscriptionErrors, CreateSubscriptionResponses, DeleteHopperData, DeleteHopperErrors, DeleteHopperResponses, DeleteItemData, DeleteItemErrors, DeleteItemResponses, DeleteMediaData, DeleteMediaErrors, DeleteMediaResponses, DeleteSignalData, DeleteSignalErrors, DeleteSignalResponses, DeleteSubscriptionData, DeleteSubscriptionErrors, DeleteSubscriptionResponses, DraftNoteData, DraftNoteErrors, DraftNoteResponses, ExtLineageGlyphGetLineageData, ExtLineageGlyphGetLineageErrors, ExtLineageGlyphGetLineageResponses, ExtLineageGlyphListSummariesData, ExtLineageGlyphListSummariesErrors, ExtLineageGlyphListSummariesResponses, GenerateItemData, GenerateItemErrors, GenerateItemResponses, GetAiModelsData, GetAiModelsErrors, GetAiModelsResponses, GetChangesData, GetChangesErrors, GetChangesResponses, GetFarcasterItemData, GetFarcasterItemErrors, GetFarcasterItemResponses, GetFarcasterSettingsData, GetFarcasterSettingsErrors, GetFarcasterSettingsResponses, GetFarcasterThreadData, GetFarcasterThreadErrors, GetFarcasterThreadResponses, GetForkOptionsData, GetForkOptionsErrors, GetForkOptionsResponses, GetHopperData, GetHopperErrors, GetHopperResponses, GetImportedHistoryData, GetImportedHistoryErrors, GetImportedHistoryResponses, GetImportedItemData, GetImportedItemErrors, GetImportedItemResponses, GetImportedVersionData, GetImportedVersionErrors, GetImportedVersionResponses, GetItemData, GetItemErrors, GetItemFreshnessData, GetItemFreshnessErrors, GetItemFreshnessResponses, GetItemResponses, GetMentionSourceData, GetMentionSourceErrors, GetMentionSourceResponses, GetSettingsData, GetSettingsErrors, GetSettingsResponses, GetSubscriptionData, GetSubscriptionErrors, GetSubscriptionResponses, GetUpdateStateData, GetUpdateStateErrors, GetUpdateStateResponses, GetVersionData, GetVersionErrors, GetVersionResponses, ListAuthorizationsData, ListAuthorizationsErrors, ListAuthorizationsResponses, ListFarcasterCastsData, ListFarcasterCastsErrors, ListFarcasterCastsResponses, ListFarcasterStubsData, ListFarcasterStubsErrors, ListFarcasterStubsResponses, ListHoppersData, ListHoppersErrors, ListHoppersResponses, ListImportedReadingData, ListImportedReadingErrors, ListImportedReadingResponses, ListInteractionsData, ListInteractionsErrors, ListInteractionsResponses, ListItemsData, ListItemsErrors, ListItemsResponses, ListMentionsData, ListMentionsErrors, ListMentionsResponses, ListReadingData, ListReadingErrors, ListReadingResponses, ListSignalsData, ListSignalsErrors, ListSignalsResponses, ListStaleThreadsData, ListStaleThreadsErrors, ListStaleThreadsResponses, ListSubscriptionsData, ListSubscriptionsErrors, ListSubscriptionsResponses, ListThumbsData, ListThumbsErrors, ListThumbsResponses, MarkReadBatchData, MarkReadBatchErrors, MarkReadBatchResponses, MarkReadData, MarkReadErrors, MarkReadResponses, MarkUnreadBatchData, MarkUnreadBatchErrors, MarkUnreadBatchResponses, MarkUnreadData, MarkUnreadErrors, MarkUnreadResponses, PinItemData, PinItemErrors, PinItemResponses, PollAllSubscriptionsData, PollAllSubscriptionsErrors, PollAllSubscriptionsResponses, PreviewData, PreviewErrors, PreviewResponses, PublishItemData, PublishItemErrors, PublishItemResponses, RefreshItemData, RefreshItemErrors, RefreshItemResponses, RemoveHopperItemData, RemoveHopperItemErrors, RemoveHopperItemResponses, ReplyOnFarcasterData, ReplyOnFarcasterErrors, ReplyOnFarcasterResponses, RestoreItemData, RestoreItemErrors, RestoreItemResponses, ResyncSubscriptionData, ResyncSubscriptionErrors, ResyncSubscriptionResponses, RevokeAllAuthorizationsData, RevokeAllAuthorizationsErrors, RevokeAllAuthorizationsResponses, RevokeAuthorizationData, RevokeAuthorizationErrors, RevokeAuthorizationResponses, SearchData, SearchErrors, SearchResponses, SetFarcasterCrosspostData, SetFarcasterCrosspostErrors, SetFarcasterCrosspostResponses, SetSignalData, SetSignalErrors, SetSignalResponses, UpdateFarcasterSettingsData, UpdateFarcasterSettingsErrors, UpdateFarcasterSettingsResponses, UpdateHopperData, UpdateHopperErrors, UpdateHopperResponses, UpdateItemData, UpdateItemErrors, UpdateItemResponses, UpdateMentionData, UpdateMentionErrors, UpdateMentionResponses, UpdateSettingsData, UpdateSettingsErrors, UpdateSettingsResponses, UpdateSubscriptionData, UpdateSubscriptionErrors, UpdateSubscriptionResponses, UploadMediaData, UploadMediaErrors, UploadMediaResponses, WithdrawItemData, WithdrawItemErrors, WithdrawItemResponses } from './types.gen.js';
 
 export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends boolean = boolean, TResponse = unknown> = Options2<TData, ThrowOnError, TResponse> & {
     /**
@@ -732,5 +732,107 @@ export const extLineageGlyphListSummaries = <ThrowOnError extends boolean = fals
             type: 'apiKey'
         }, { scheme: 'bearer', type: 'http' }],
     url: '/api/ext/lineage-glyph/summaries',
+    ...options
+});
+
+export const getFarcasterSettings = <ThrowOnError extends boolean = false>(options?: Options<GetFarcasterSettingsData, ThrowOnError>): RequestResult<GetFarcasterSettingsResponses, GetFarcasterSettingsErrors, ThrowOnError> => (options?.client ?? client).get<GetFarcasterSettingsResponses, GetFarcasterSettingsErrors, ThrowOnError>({
+    security: [{
+            in: 'cookie',
+            name: 'blyg_session',
+            type: 'apiKey'
+        }, { scheme: 'bearer', type: 'http' }],
+    url: '/api/farcaster/settings',
+    ...options
+});
+
+export const updateFarcasterSettings = <ThrowOnError extends boolean = false>(options: Options<UpdateFarcasterSettingsData, ThrowOnError>): RequestResult<UpdateFarcasterSettingsResponses, UpdateFarcasterSettingsErrors, ThrowOnError> => (options.client ?? client).patch<UpdateFarcasterSettingsResponses, UpdateFarcasterSettingsErrors, ThrowOnError>({
+    security: [{
+            in: 'cookie',
+            name: 'blyg_session',
+            type: 'apiKey'
+        }, { scheme: 'bearer', type: 'http' }],
+    url: '/api/farcaster/settings',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+export const addFarcasterSource = <ThrowOnError extends boolean = false>(options: Options<AddFarcasterSourceData, ThrowOnError>): RequestResult<AddFarcasterSourceResponses, AddFarcasterSourceErrors, ThrowOnError> => (options.client ?? client).post<AddFarcasterSourceResponses, AddFarcasterSourceErrors, ThrowOnError>({
+    security: [{
+            in: 'cookie',
+            name: 'blyg_session',
+            type: 'apiKey'
+        }, { scheme: 'bearer', type: 'http' }],
+    url: '/api/farcaster/sources',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+export const getFarcasterThread = <ThrowOnError extends boolean = false>(options: Options<GetFarcasterThreadData, ThrowOnError>): RequestResult<GetFarcasterThreadResponses, GetFarcasterThreadErrors, ThrowOnError> => (options.client ?? client).get<GetFarcasterThreadResponses, GetFarcasterThreadErrors, ThrowOnError>({
+    security: [{
+            in: 'cookie',
+            name: 'blyg_session',
+            type: 'apiKey'
+        }, { scheme: 'bearer', type: 'http' }],
+    url: '/api/farcaster/thread',
+    ...options
+});
+
+export const listFarcasterStubs = <ThrowOnError extends boolean = false>(options: Options<ListFarcasterStubsData, ThrowOnError>): RequestResult<ListFarcasterStubsResponses, ListFarcasterStubsErrors, ThrowOnError> => (options.client ?? client).get<ListFarcasterStubsResponses, ListFarcasterStubsErrors, ThrowOnError>({
+    security: [{
+            in: 'cookie',
+            name: 'blyg_session',
+            type: 'apiKey'
+        }, { scheme: 'bearer', type: 'http' }],
+    url: '/api/farcaster/stubs',
+    ...options
+});
+
+export const listFarcasterCasts = <ThrowOnError extends boolean = false>(options?: Options<ListFarcasterCastsData, ThrowOnError>): RequestResult<ListFarcasterCastsResponses, ListFarcasterCastsErrors, ThrowOnError> => (options?.client ?? client).get<ListFarcasterCastsResponses, ListFarcasterCastsErrors, ThrowOnError>({
+    security: [{
+            in: 'cookie',
+            name: 'blyg_session',
+            type: 'apiKey'
+        }, { scheme: 'bearer', type: 'http' }],
+    url: '/api/farcaster/casts',
+    ...options
+});
+
+export const getFarcasterItem = <ThrowOnError extends boolean = false>(options: Options<GetFarcasterItemData, ThrowOnError>): RequestResult<GetFarcasterItemResponses, GetFarcasterItemErrors, ThrowOnError> => (options.client ?? client).get<GetFarcasterItemResponses, GetFarcasterItemErrors, ThrowOnError>({
+    security: [{
+            in: 'cookie',
+            name: 'blyg_session',
+            type: 'apiKey'
+        }, { scheme: 'bearer', type: 'http' }],
+    url: '/api/farcaster/items/{id}',
+    ...options
+});
+
+export const setFarcasterCrosspost = <ThrowOnError extends boolean = false>(options: Options<SetFarcasterCrosspostData, ThrowOnError>): RequestResult<SetFarcasterCrosspostResponses, SetFarcasterCrosspostErrors, ThrowOnError> => (options.client ?? client).put<SetFarcasterCrosspostResponses, SetFarcasterCrosspostErrors, ThrowOnError>({
+    security: [{
+            in: 'cookie',
+            name: 'blyg_session',
+            type: 'apiKey'
+        }, { scheme: 'bearer', type: 'http' }],
+    url: '/api/farcaster/items/{id}/crosspost',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+export const replyOnFarcaster = <ThrowOnError extends boolean = false>(options: Options<ReplyOnFarcasterData, ThrowOnError>): RequestResult<ReplyOnFarcasterResponses, ReplyOnFarcasterErrors, ThrowOnError> => (options.client ?? client).post<ReplyOnFarcasterResponses, ReplyOnFarcasterErrors, ThrowOnError>({
+    security: [{
+            in: 'cookie',
+            name: 'blyg_session',
+            type: 'apiKey'
+        }, { scheme: 'bearer', type: 'http' }],
+    url: '/api/farcaster/items/{id}/reply',
     ...options
 });

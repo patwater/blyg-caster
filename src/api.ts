@@ -52,6 +52,8 @@ import { isDecisionModel } from "./ai/models.ts";
 import { platformFetchFor } from "./importer/http.ts";
 import { reconcileIndex } from "./importer/poll.ts";
 import { hex, isFollowableUrl, isValidTimeZone, newMediaId, normalizeMount, nowIso } from "./util.ts";
+import { onPublished, onWithdrawn } from "./farcaster/crosspost.ts";
+import { emptyCastStubProblem } from "./farcaster/stub.ts";
 
 const MEDIA_TYPES: Record<string, string> = {
   "image/png": "png",
@@ -229,11 +231,17 @@ async function publishAndNotify(c: Context<{ Bindings: Env }>, item: ItemRow, no
     ? `Generated text contains ${echoed.map((id) => `![[${id}]]`).join(", ")} on its own line, which the instruction did not ask for. It was published as a quote and its author notified. Edit the output and republish if that was not intended.`
     : undefined;
   const warning = [lineageNote, echoNote].filter(Boolean).join(" ") || undefined;
+  // blygcaster (Q8): a stub of a Farcaster cast needs words of the owner's own.
+  const emptyStub = await emptyCastStubProblem(c.env.DB, item);
+  if (emptyStub) return c.json({ error: emptyStub }, 400);
   try {
     const version = await publish(c.env.DB, item, note, origin, noteGenerated);
     // Studio-private bookkeeping must never fail a publish that has happened.
     if (settle) await settle(version).catch((e) => console.error("change class not settled", e));
     await sendMentionsFor(c, item.id, version);
+    // blygcaster: cross-posting is fire and forget (§15.2). It runs after the
+    // response, and onPublished never throws.
+    c.executionCtx.waitUntil(onPublished(c.env, { itemId: item.id, version, origin }));
     return c.json({ ok: true, version, ...extra, ...(warning ? { warning } : {}) });
   } catch (e) {
     if (e instanceof TransclusionResolveError) {
@@ -380,6 +388,8 @@ api.openapi(routes.withdrawItem, async (c) => {
   // that must go out precisely when the reference has not changed, so it is the
   // one caller allowed to override the test (migration 0011).
   await sendMentionsFor(c, item.id, item.version, { force: true });
+  // blygcaster (Q15): the withdrawn item's casts are deleted, in the background.
+  c.executionCtx.waitUntil(onWithdrawn(c.env, item.id));
   return c.json({ ok: true, version });
 });
 

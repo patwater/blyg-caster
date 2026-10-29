@@ -259,7 +259,8 @@ export interface AuthorLink {
 
 export interface SubscriptionRow {
   id: string;
-  kind: "blyg" | "rss";
+  /** blygcaster: "farcaster" is a Farcaster account or channel (src/farcaster/reading.ts), imported as L0. */
+  kind: "blyg" | "rss" | "farcaster";
   origin: string;
   feed_url: string;
   title: string;

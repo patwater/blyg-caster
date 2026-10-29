@@ -121,7 +121,7 @@ importerApi.openapi(routes.updateSubscription, async (c) => {
 /** Poll every subscription that is not paused, in the background; answers at once with how many. */
 importerApi.openapi(routes.pollAllSubscriptions, async (c) => {
   const polling = (await listSubscriptions(c.env.DB)).filter((s) => s.status !== "paused").length;
-  c.executionCtx.waitUntil(pollAll(c.env.DB, platformFetchFor(c.env)).catch(() => {}));
+  c.executionCtx.waitUntil(pollAll(c.env.DB, platformFetchFor(c.env), c.env).catch(() => {}));
   return c.json({ polling });
 });
 

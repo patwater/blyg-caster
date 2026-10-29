@@ -26,10 +26,10 @@ import { createOwnerApi } from '../src/owner-api.ts';
 import { routes } from '../src/contract/routes.ts';
 
 const model = {
-  'owner:read': ['getChanges','listItems','getItem','getSettings','listSubscriptions','getSubscription','listHoppers','getHopper','listSignals','listMentions','search','getVersion','listReading','listImportedReading','getImportedItem','getImportedHistory','getImportedVersion','getUpdateState','getMentionSource','listStaleThreads','getItemFreshness','getForkOptions','listInteractions','listThumbs','getAiModels','extLineageGlyphGetLineage','extLineageGlyphListSummaries'],
+  'owner:read': ['getChanges','listItems','getItem','getSettings','listSubscriptions','getSubscription','listHoppers','getHopper','listSignals','listMentions','search','getVersion','listReading','listImportedReading','getImportedItem','getImportedHistory','getImportedVersion','getUpdateState','getMentionSource','listStaleThreads','getItemFreshness','getForkOptions','listInteractions','listThumbs','getAiModels','extLineageGlyphGetLineage','extLineageGlyphListSummaries','getFarcasterSettings','getFarcasterThread','listFarcasterStubs','listFarcasterCasts','getFarcasterItem'],
   'owner:draft': ['createItem','updateItem','deleteItem','restoreItem','uploadMedia','generateItem','draftNote','classifyChange','preview'],
-  'owner:publish': ['publishItem','withdrawItem','pinItem','refreshItem','deleteMedia'],
-  'owner:manage': ['updateSettings','createSubscription','updateSubscription','resyncSubscription','pollAllSubscriptions','deleteSubscription','createHopper','updateHopper','deleteHopper','addHopperItem','removeHopperItem','setSignal','deleteSignal','updateMention'],
+  'owner:publish': ['publishItem','withdrawItem','pinItem','refreshItem','deleteMedia','setFarcasterCrosspost','replyOnFarcaster'],
+  'owner:manage': ['updateSettings','createSubscription','updateSubscription','resyncSubscription','pollAllSubscriptions','deleteSubscription','createHopper','updateHopper','deleteHopper','addHopperItem','removeHopperItem','setSignal','deleteSignal','updateMention','updateFarcasterSettings','addFarcasterSource'],
   'reading:state': ['markRead','markReadBatch','markUnread','markUnreadBatch'],
 };
 const capabilities = Object.keys(model);

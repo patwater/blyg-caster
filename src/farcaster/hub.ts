@@ -44,6 +44,8 @@ export interface HubOptions {
   apiKey?: string;
   castUrlTemplate?: string;
   timeoutMs?: number;
+  /** Names already known for FIDs (config.ts keeps them in D1). */
+  accountCache?: { get(fid: number): Promise<FarcasterAccount | null>; put(account: FarcasterAccount): Promise<void> };
 }
 
 const MAX_PAGE = 100;
@@ -203,6 +205,8 @@ export class HubCastSource implements CastSource {
   }
 
   private async fetchAccount(fid: number): Promise<FarcasterAccount | null> {
+    const cached = await this.options.accountCache?.get(fid).catch(() => null);
+    if (cached) return cached;
     const body = obj(await this.get("v1/userDataByFid", { fid }));
     if (!body || !Array.isArray(body.messages)) throw new FarcasterError("malformed", "hub userDataByFid has no messages array");
     let handle: string | null = null;
@@ -213,7 +217,9 @@ export class HubCastSource implements CastSource {
       if (ud.type === "USER_DATA_TYPE_USERNAME" || ud.type === 6) handle = cleanName(ud.value)?.replace(/^@/, "") ?? handle;
       if (ud.type === "USER_DATA_TYPE_DISPLAY" || ud.type === 2) displayName = cleanName(ud.value) ?? displayName;
     }
-    return handle || displayName ? { fid, handle, displayName } : { fid, handle: null, displayName: null };
+    const account = { fid, handle, displayName };
+    await this.options.accountCache?.put(account).catch(() => {});
+    return account;
   }
 
   async resolveAccount(handle: string): Promise<FarcasterAccount | null> {

@@ -14,7 +14,8 @@ import { pollL0Subscription } from "./l0.ts";
 import { appendFlag, applyEffect, getImportedItem, listHoppersForItem, recordIndexSync, recordPollFailure, recordPollSuccess, refreshSourceTitle, toLocalState, updateSurface } from "./store.ts";
 import { transition } from "./transition.ts";
 import { mapLimit } from "./util.ts";
-import type { SubscriptionRow } from "../types.ts";
+import type { Env, SubscriptionRow } from "../types.ts";
+import { isFarcasterSubscription, pollFarcasterSubscription } from "../farcaster/reading.ts";
 
 const INDEX_SYNC_PERIOD_MS = 24 * 3600 * 1000;
 const RECONCILE_CONCURRENCY = 4;
@@ -179,7 +180,13 @@ async function refreshManifest(db: D1Database, sub: SubscriptionRow, fetchFn: Fe
 
 /** One §3.2 poll cycle for a single subscription. `sub.kind === "rss"` defers entirely to the L0 wrapper (§3.5). */
 
-export async function pollSubscription(db: D1Database, sub: SubscriptionRow, fetchFn: FetchLike = platformFetch): Promise<PollResult> {
+export async function pollSubscription(db: D1Database, sub: SubscriptionRow, fetchFn: FetchLike = platformFetch, env?: Env): Promise<PollResult> {
+  // blygcaster: a Farcaster source reads through its own adapters, which need
+  // the Worker's secrets, so it takes env rather than the importer's fetch.
+  if (isFarcasterSubscription(sub)) {
+    const r = await pollFarcasterSubscription(db, sub, env);
+    return { outcome: r.outcome, itemsFetched: r.itemsChanged, reconciled: false };
+  }
   if (sub.kind !== "blyg") {
     const r = await pollL0Subscription(db, sub, fetchFn);
     return { outcome: r.outcome, itemsFetched: r.itemsChanged, reconciled: false };

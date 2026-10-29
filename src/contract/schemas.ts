@@ -47,7 +47,7 @@ export const MediaRowSchema = z.object({
 
 export const SubscriptionRowSchema = z.object({
   id: z.string(),
-  kind: z.enum(["blyg", "rss"]),
+  kind: z.enum(["blyg", "rss", "farcaster"]),
   origin: z.string(),
   feed_url: z.string(),
   title: z.string(),

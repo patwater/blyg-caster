@@ -77,6 +77,17 @@ it("exercises every declared operation through its named SDK method, including a
     ["classifyChange", 409, client => api.classifyChange({ client, path: { id } })],
     ["getImportedHistory", 404, client => api.getImportedHistory({ client, path: { sub: sub.id, id: "remote" } })],
     ["getImportedVersion", 404, client => api.getImportedVersion({ client, path: { sub: sub.id, id: "remote", v: 1 } })],
+    // blygcaster: /api/farcaster/. No backend is configured here, so the thread
+    // read answers 200 with an error beside it, and the reply offer has no stub.
+    ["getFarcasterSettings", 200, client => api.getFarcasterSettings({ client })],
+    ["updateFarcasterSettings", 200, client => api.updateFarcasterSettings({ client, body: { ai_note: "Includes AI-generated text." } })],
+    ["addFarcasterSource", 201, client => api.addFarcasterSource({ client, body: { kind: "channel", value: "matrix", parent_url: "https://farcaster.example/~/channel/matrix" } })],
+    ["getFarcasterThread", 200, client => api.getFarcasterThread({ client, query: { fid: 3, hash: "0x" + "ab".repeat(20) } })],
+    ["listFarcasterStubs", 200, client => api.listFarcasterStubs({ client, query: { casts: `3:0x${"ab".repeat(20)}` } })],
+    ["listFarcasterCasts", 200, client => api.listFarcasterCasts({ client })],
+    ["getFarcasterItem", 200, client => api.getFarcasterItem({ client, path: { id } })],
+    ["setFarcasterCrosspost", 200, client => api.setFarcasterCrosspost({ client, path: { id }, body: { enabled: false } })],
+    ["replyOnFarcaster", 404, client => api.replyOnFarcaster({ client, path: { id } })],
     ["withdrawItem", 200, client => api.withdrawItem({ client, path: { id } })],
     ["deleteItem", 409, client => api.deleteItem({ client, path: { id } })],
     ["deleteHopper", 200, client => api.deleteHopper({ client, path: { id: hopper.id } })],

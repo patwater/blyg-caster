@@ -3,7 +3,7 @@
 // Due-selection is a pure function (fake-clock testable); the actual cron
 // trigger just calls runScheduledPoll with the real clock and fetch.
 
-import type { SubscriptionRow } from "../types.ts";
+import type { Env, SubscriptionRow } from "../types.ts";
 import type { FetchLike } from "./http.ts";
 import { platformFetch } from "./http.ts";
 import { pollSubscription } from "./poll.ts";
@@ -80,16 +80,16 @@ export async function repairImportedUrls(db: D1Database, limit = 200): Promise<n
  * whatever its schedule or backoff says. Degraded ones included: after an
  * outage this is the way back without waiting out hours of backoff.
  */
-export async function pollAll(db: D1Database, fetchFn: FetchLike = platformFetch): Promise<number> {
+export async function pollAll(db: D1Database, fetchFn: FetchLike = platformFetch, env?: Env): Promise<number> {
   const subs = (await listSubscriptions(db)).filter((s) => s.status !== "paused");
-  await mapLimit(subs, POLL_CONCURRENCY, (sub) => pollSubscription(db, sub, fetchFn));
+  await mapLimit(subs, POLL_CONCURRENCY, (sub) => pollSubscription(db, sub, fetchFn, env));
   return subs.length;
 }
 
 /** Quarter-hour tick: select and poll due subscriptions, bounded concurrency. */
-export async function runScheduledPoll(db: D1Database, fetchFn: FetchLike = platformFetch, now: number = Date.now()): Promise<ScheduledPollResult> {
+export async function runScheduledPoll(db: D1Database, fetchFn: FetchLike = platformFetch, now: number = Date.now(), env?: Env): Promise<ScheduledPollResult> {
   const subs = await listSubscriptions(db);
   const due = dueSubscriptions(subs, now);
-  await mapLimit(due, POLL_CONCURRENCY, (sub) => pollSubscription(db, sub, fetchFn));
+  await mapLimit(due, POLL_CONCURRENCY, (sub) => pollSubscription(db, sub, fetchFn, env));
   return { due: due.length, polled: due.length };
 }

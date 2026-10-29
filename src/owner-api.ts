@@ -12,6 +12,7 @@ import { matchOperation, operationScopes, type OwnerAccess } from './permissions
 import spec from "../openapi.json";
 import { readApi } from "./read-api.ts";
 import { extensionApi, type ServerExtension } from "./extensions/server.ts";
+import { farcasterApi } from "./farcaster/api.ts";
 import { compiledServerExtensions } from "../build/extensions.server.ts";
 
 /**
@@ -74,6 +75,7 @@ ownerApi.route("/", importerApi);
 ownerApi.route("/", mentionsApi);
 ownerApi.route("/", readApi);
 ownerApi.route("/", extensionApi(extensions));
+ownerApi.route("/", farcasterApi);
 
 ownerApi.get('/openapi.json', c => {
   const document = structuredClone(spec);

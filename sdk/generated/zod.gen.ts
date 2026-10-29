@@ -192,7 +192,11 @@ export const zSettings = z.object({
 
 export const zSubscription = z.object({
     id: z.string(),
-    kind: z.enum(['blyg', 'rss']),
+    kind: z.enum([
+        'blyg',
+        'rss',
+        'farcaster'
+    ]),
     origin: z.string(),
     feed_url: z.string(),
     title: z.string(),
@@ -572,6 +576,97 @@ export const zLineageGlyphSummary = z.object({
         transclusion: z.int().gte(0),
         fork: z.int().gte(0)
     })
+});
+
+export const zFarcasterSettings = z.object({
+    fid: z.int().gt(0).nullable(),
+    read_backend: z.enum(['hub', 'neynar']),
+    write_backend: z.enum(['hub', 'neynar']),
+    hub_url: z.string(),
+    cast_url_template: z.string(),
+    crosspost_enabled: z.boolean(),
+    crosspost_channel_id: z.string(),
+    crosspost_channel_parent_url: z.string(),
+    ai_note: z.string()
+});
+
+export const zFarcasterStatus = z.object({
+    settings: zFarcasterSettings,
+    secrets: z.object({
+        FARCASTER_SIGNER_KEY: z.boolean(),
+        FARCASTER_HUB_API_KEY: z.boolean(),
+        NEYNAR_API_KEY: z.boolean(),
+        NEYNAR_SIGNER_UUID: z.boolean()
+    }),
+    fake: z.boolean()
+});
+
+export const zFarcasterCast = z.object({
+    fid: z.int().gt(0),
+    hash: z.string(),
+    handle: z.string().nullable(),
+    displayName: z.string().nullable(),
+    text: z.string(),
+    createdAt: z.string(),
+    url: z.string(),
+    parentHash: z.string().nullable(),
+    parentFid: z.int().nullable(),
+    parentUrl: z.string().nullable(),
+    embeds: z.array(z.union([
+        z.object({
+            type: z.enum(['image']),
+            url: z.string()
+        }),
+        z.object({
+            type: z.enum(['link']),
+            url: z.string()
+        }),
+        z.object({
+            type: z.enum(['cast']),
+            cast: z.object({
+                fid: z.int().gt(0),
+                hash: z.string()
+            })
+        })
+    ])),
+    channel: z.string().nullable()
+}).nullable();
+
+export const zFarcasterCastRecord = z.object({
+    id: z.string(),
+    item_id: z.string(),
+    version: z.int(),
+    purpose: z.enum(['crosspost', 'reply']),
+    status: z.enum([
+        'pending',
+        'posted',
+        'failed',
+        'cancelled',
+        'deleting',
+        'deleted',
+        'skipped',
+        'delete_failed'
+    ]),
+    cast_hash: z.string().nullable(),
+    cast_url: z.string().nullable(),
+    text: z.string(),
+    attempts: z.int(),
+    next_attempt_at: z.string().nullable(),
+    last_error: z.string().nullable(),
+    backend: z.string().nullable(),
+    created: z.string(),
+    updated: z.string()
+});
+
+export const zFarcasterItem = z.object({
+    enabled: z.boolean(),
+    stub: z.object({
+        fid: z.int(),
+        hash: z.string(),
+        url: z.string()
+    }).nullable(),
+    can_reply: z.boolean(),
+    records: z.array(zFarcasterCastRecord)
 });
 
 /**
@@ -1639,3 +1734,117 @@ export const zExtLineageGlyphListSummariesQuery = z.object({
 export const zExtLineageGlyphListSummariesResponse = z.object({
     summaries: z.record(z.string(), zLineageGlyphSummary)
 });
+
+/**
+ * Success
+ */
+export const zGetFarcasterSettingsResponse = zFarcasterStatus;
+
+export const zUpdateFarcasterSettingsBody = z.object({
+    fid: z.int().gt(0).nullish(),
+    read_backend: z.enum(['hub', 'neynar']).optional(),
+    write_backend: z.enum(['hub', 'neynar']).optional(),
+    hub_url: z.string().optional(),
+    cast_url_template: z.string().optional(),
+    crosspost_enabled: z.boolean().optional(),
+    crosspost_channel_id: z.string().optional(),
+    crosspost_channel_parent_url: z.string().optional(),
+    ai_note: z.string().optional()
+}).strict();
+
+/**
+ * Success
+ */
+export const zUpdateFarcasterSettingsResponse = zFarcasterStatus;
+
+export const zAddFarcasterSourceBody = z.object({
+    kind: z.enum(['account', 'channel']),
+    value: z.string().min(1).max(100),
+    parent_url: z.string().optional()
+}).strict();
+
+/**
+ * Success
+ */
+export const zAddFarcasterSourceResponse = zSubscription;
+
+export const zGetFarcasterThreadQuery = z.object({
+    fid: z.int().gt(0),
+    hash: z.string().regex(/^0x[0-9a-f]{40}$/)
+});
+
+/**
+ * Success
+ */
+export const zGetFarcasterThreadResponse = z.object({
+    cast: zFarcasterCast,
+    parents: z.array(zFarcasterCast),
+    replies: z.array(zFarcasterCast),
+    error: z.string().optional()
+});
+
+export const zListFarcasterStubsQuery = z.object({
+    casts: z.string().max(4000)
+});
+
+/**
+ * Success
+ */
+export const zListFarcasterStubsResponse = z.object({
+    items: z.array(z.object({
+        fid: z.int(),
+        hash: z.string(),
+        item_id: z.string(),
+        status: z.enum([
+            'draft',
+            'public',
+            'withdrawn'
+        ])
+    }))
+});
+
+export const zListFarcasterCastsQuery = z.object({
+    offset: z.int().gte(0).nullish(),
+    limit: z.int().gte(1).lte(100).optional()
+});
+
+/**
+ * Success
+ */
+export const zListFarcasterCastsResponse = z.object({
+    items: z.array(zFarcasterCastRecord),
+    total: z.int(),
+    offset: z.int(),
+    limit: z.int()
+});
+
+export const zGetFarcasterItemPath = z.object({
+    id: z.string().min(1)
+});
+
+/**
+ * Success
+ */
+export const zGetFarcasterItemResponse = zFarcasterItem;
+
+export const zSetFarcasterCrosspostBody = z.object({
+    enabled: z.boolean()
+}).strict();
+
+export const zSetFarcasterCrosspostPath = z.object({
+    id: z.string().min(1)
+});
+
+/**
+ * Success
+ */
+export const zSetFarcasterCrosspostResponse = zFarcasterItem;
+
+export const zReplyOnFarcasterPath = z.object({
+    id: z.string().min(1)
+});
+
+/**
+ * Success
+ */
+export const zReplyOnFarcasterResponse = zFarcasterItem;

@@ -2,6 +2,7 @@ import { ItemSchema, VersionSchema, MediaSchema, SubscriptionSchema, HopperSchem
 import { createRoute, z } from "@hono/zod-openapi";
 import { ErrorSchema, route } from "./route.ts";
 import { extensionRoutes } from "../../extensions/catalog.ts";
+import { farcasterRoutes } from "../farcaster/contract.ts";
 import { SettingsSchema, HopperItemRowSchema, SignalRowSchema, MentionOutRowSchema } from "./schemas.ts";
 import { CHANGE_DOMAINS } from '../change-state.ts';
 import { CHANGE_CATEGORIES } from "../change-category.ts";
@@ -138,6 +139,8 @@ export const routes = {
   getForkOptions: route("getForkOptions", "get", "/fork-options", z.object({ origin: z.string(), ourOrigin: z.string(), versions: z.array(z.object({ version: z.number(), at: z.string(), note: z.string().nullable() })), error: z.string().optional() }), undefined, 200, z.object({ id: z.string(), sub: z.string().optional(), origin: z.string().optional() })),
   // Read routes contributed by the extensions in this repository (extensions/catalog.ts).
   ...extensionRoutes,
+  // blygcaster: /api/farcaster/ (src/farcaster/contract.ts).
+  ...farcasterRoutes,
 };
 // An identical file uploaded again to the same item returns the existing row (studio#7).
 routes.uploadMedia.responses[200] = { description: "Already attached", content: json(z.object({ id: z.string(), url: z.string(), mime: z.string(), duplicate: z.literal(true) })) };

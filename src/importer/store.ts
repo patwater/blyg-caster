@@ -10,7 +10,7 @@ const FLAG_LOG_CAP = 20;
 
 export async function createSubscription(
   db: D1Database,
-  row: { kind: "blyg" | "rss"; origin: string; feedUrl: string; title: string; titleAuto?: boolean; surface?: Surface | null },
+  row: { kind: SubscriptionRow["kind"]; origin: string; feedUrl: string; title: string; titleAuto?: boolean; surface?: Surface | null },
 ): Promise<SubscriptionRow> {
   const id = newId();
   const created = nowIso();
@@ -54,7 +54,8 @@ export async function listSubscriptions(db: D1Database): Promise<SubscriptionRow
 export async function listBlogrollSubscriptions(db: D1Database): Promise<SubscriptionRow[]> {
   return (
     await db
-      .prepare("SELECT * FROM subscriptions WHERE in_blogroll = 1 AND status != 'paused' ORDER BY title ASC")
+      // blygcaster: who the owner reads on Farcaster is never published.
+      .prepare("SELECT * FROM subscriptions WHERE in_blogroll = 1 AND status != 'paused' AND kind != 'farcaster' ORDER BY title ASC")
       .all<SubscriptionRow>()
   ).results;
 }

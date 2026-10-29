@@ -9,6 +9,8 @@ import { getSubscription, getImportedItem, OWN_SUBSCRIPTION } from "./importer/s
 import { siteOrigin } from "./protocol.ts";
 import { sourceTitleAndUrl } from "./importer/util.ts";
 import { normalizeMount, nowIso } from "./util.ts";
+import { isFarcasterSubscription } from "./farcaster/reading.ts";
+import { createCastStubDraft } from "./farcaster/stub.ts";
 
 /**
  * The stub action (v0.3-plan §3.1, decision #27) — one gesture, replacing
@@ -44,6 +46,9 @@ export async function createResponseDraft(c: Context<{ Bindings: Env }>, body: {
   if (!sub) throw new HTTPException(404, { message: "subscription not found" });
   const row = await getImportedItem(c.env.DB, subId, remoteId);
   if (!row) throw new HTTPException(404, { message: "imported item not found" });
+
+  // blygcaster: a cast is stubbed with its own label and the chosen passage.
+  if (isFarcasterSubscription(sub)) return createCastStubDraft(c.env.DB, row, body.selection);
 
   let contentMd: string;
   let stubInput: unknown;

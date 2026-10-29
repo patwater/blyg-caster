@@ -1,10 +1,11 @@
 import { routes } from './contract/routes.ts';
+import { FARCASTER_PUBLISH_OPERATIONS } from './farcaster/contract.ts';
 
 import type { OwnerScope } from './auth-scopes.ts';
 export { OWNER_SCOPES, SCOPE_DESCRIPTIONS } from './auth-scopes.ts';
 export interface OwnerAccess { scope: string[]; clientId: string; userId: string; grantId?: string }
 const draft = new Set(['createItem', 'updateItem', 'deleteItem', 'restoreItem', 'uploadMedia', 'generateItem', 'draftNote', 'classifyChange', 'preview']);
-const publish = new Set(['publishItem', 'withdrawItem', 'pinItem', 'refreshItem', 'deleteMedia']);
+const publish = new Set(['publishItem', 'withdrawItem', 'pinItem', 'refreshItem', 'deleteMedia', ...FARCASTER_PUBLISH_OPERATIONS]);
 // Read state is low-stakes, reversible bookkeeping: a sync-only reader app should not
 // need the grant that can also delete subscriptions (studio#45, session 43).
 const readState = new Set(['markRead', 'markUnread', 'markReadBatch', 'markUnreadBatch']);
