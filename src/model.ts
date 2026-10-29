@@ -1,0 +1,706 @@
+import { DEFAULT_FONT, isFont } from "./fonts.ts";
+import { DEFAULT_FEED_ORDER } from "./feeds/index.ts";
+import { DEFAULT_POSTS_PATH } from "./front-page.ts";
+import { parseCustomTheme } from "./themes.ts";
+// Data access + publish-flow semantics — v0.1-plan §3.1.
+
+import { renderMarkdown } from "./markdown.ts";
+import { annotateGenerated, applyGeneratedWrappers, parseScopes, stripToOutput, TkPublishError, unresolvedScopes } from "./tk.ts";
+import { recordPublishInteractions } from "./interactions.ts";
+import { applyVersionAgreement, composeStubCite, composeTransclusionCite, parseStoredStub } from "./stub.ts";
+import {
+  applyInternalLinks,
+  type TransclusionRefError,
+  resolveBlockLinks,
+  resolveInternalLinks,
+  resolveTransclusions,
+  TransclusionResolveError,
+} from "./transclusion.ts";
+import type { ForkedFrom, ItemRow, MediaRow, ScopeProvenance, Settings, StubCite, StubOf, Transclusion, VersionRow } from "./types.ts";
+import { FRAGMENT_MAX_CHARS } from "./types.ts";
+import { parseEnabledExtensions } from "./extensions/names.ts";
+import { absolutizeHtml, authoredText, contentHash, isFollowableUrl, newId, nowIso, visibleMedia } from "./util.ts";
+
+export { TkPublishError, TransclusionResolveError };
+
+/** Thrown by publish() when the *published* (TK-stripped) fragment length exceeds the studio cap (§2.7). */
+export class FragmentTooLongError extends Error {
+  constructor(
+    public readonly length: number,
+    public readonly max: number,
+  ) {
+    super(`fragment exceeds ${max} characters`);
+  }
+}
+
+/** The raw settings rows. The update check needs keys that are not on `Settings` (timestamps, the last version seen). */
+export async function getSettingsMap(db: D1Database): Promise<Record<string, string>> {
+  const rows = await db.prepare("SELECT key, value FROM settings").all<{ key: string; value: string }>();
+  return Object.fromEntries(rows.results.map((r) => [r.key, r.value]));
+}
+
+/**
+ * The title a blyg publishes when its operator has not set one.
+ *
+ * This used to be the literal string `"blyg"`, and that default leaked into the
+ * world: by session 29, two independent live nodes were publishing
+ * `"title": "blyg"` in their manifests, and blygger.com listed both under that
+ * name because neither operator had opened Settings. A generic default is a
+ * collision generator — every deployment that skips the step lands on the same
+ * name, and a directory then has to tell them apart by something else.
+ *
+ * Derived from the deployment's own `site_url` instead, which makes it unique
+ * wherever the domain is: `blyg.thoughtfolio.xyz` publishes as
+ * `thoughtfolio.xyz`, not as `blyg`. A leading `blyg.` or `www.` is dropped
+ * because neither says anything about whose blyg it is.
+ *
+ * Deliberately **not** a made-up human name. The honest default is the address,
+ * which is true on day one and obviously a placeholder to its owner; inventing
+ * "Thoughtfolio's Blyg" would be the client asserting something the operator
+ * never said. Venkat's session-29 framing: two people may legitimately both
+ * call their blyg the same thing, so the fix is not to forbid collisions but to
+ * stop manufacturing them.
+ *
+ * Falls back to `"blyg"` only when there is no `site_url` at all — a deployment
+ * that has published nothing and been configured with nothing.
+ */
+export function defaultSiteTitle(siteUrl: string | undefined): string {
+  if (!siteUrl) return "blyg";
+  try {
+    const host = new URL(siteUrl).hostname.replace(/^blyg\./i, "").replace(/^www\./i, "");
+    return host || "blyg";
+  } catch {
+    return "blyg";
+  }
+}
+
+export async function getSettings(db: D1Database): Promise<Settings> {
+  const rows = await db.prepare("SELECT key, value FROM settings").all<{ key: string; value: string }>();
+  return settingsFromMap(Object.fromEntries(rows.results.map((r) => [r.key, r.value])));
+}
+
+/**
+ * Every setting as it would read with nothing stored: what the setup wizard's
+ * "reset to default" restores. Derived by the same code as a real read, so the
+ * two cannot drift. `site_title` is the one derived default (from the address);
+ * resetting it stores an empty title, which reads as that derivation.
+ */
+export function settingDefaults(siteUrl: string): Settings {
+  return settingsFromMap({ site_url: siteUrl });
+}
+
+/** A stored list of label + url links; malformed JSON or unfollowable urls read as absent. */
+function parseLinkList(stored: string | undefined): Settings["author_links"] {
+  try {
+    const parsed = JSON.parse(stored ?? "[]");
+    // Rows stored before 0.27 may hold any scheme; only followable links leave.
+    if (Array.isArray(parsed)) return parsed.filter((l) => typeof l?.label === "string" && typeof l?.url === "string" && isFollowableUrl(l.url));
+  } catch {
+    // ignore malformed settings JSON; treat as no links
+  }
+  return [];
+}
+
+function parseIdList(stored: string | undefined): string[] {
+  try {
+    const parsed = JSON.parse(stored ?? "[]");
+    if (Array.isArray(parsed)) return parsed.filter((id): id is string => typeof id === "string");
+  } catch {
+    // malformed: no ids
+  }
+  return [];
+}
+
+export function settingsFromMap(map: Record<string, string>): Settings {
+  const links = parseLinkList(map.author_links);
+  return {
+    // `||` not `??`: an empty string is an unset title, not a chosen one.
+    site_title: map.site_title || defaultSiteTitle(map.site_url),
+    theme: map.theme ?? "auto",
+    custom_theme: parseCustomTheme(map.custom_theme),
+    custom_theme_dark: parseCustomTheme(map.custom_theme_dark),
+    custom_theme_name: map.custom_theme_name ?? "",
+    font: map.font && isFont(map.font) ? map.font : DEFAULT_FONT,
+    author_name: map.author_name ?? "",
+    author_url: map.author_url ?? "",
+    author_bio: map.author_bio ?? "",
+    author_links: links,
+    site_url: map.site_url ?? "",
+    avatar_media_id: map.avatar_media_id ?? "",
+    // One model per AI function since 0.26.0; the single pre-0.26 model
+    // setting is the fallback for the two functions that existed then.
+    ai_model: map.ai_model_tk ?? map.ai_model ?? "",
+    ai_model_tk: map.ai_model_tk ?? map.ai_model ?? "",
+    ai_model_changelog: map.ai_model_changelog ?? map.ai_model ?? "",
+    ai_model_feed: map.ai_model_feed ?? "",
+    // Off by default: an empty model is no classifier (session 49).
+    ai_model_classify: map.ai_model_classify ?? "",
+    change_category_in_note: map.change_category_in_note !== "off",
+    feed_prompt: map.feed_prompt ?? "",
+    ai_style_prompt: map.ai_style_prompt ?? "",
+    // Default on: an existing deployment's behaviour must not change under it.
+    accept_mentions: map.accept_mentions !== "off",
+    // On by default (Venkat, session 28). The argument for off was that a
+    // client which phones home unasked is the wrong shape for this medium; the
+    // argument that won is that the operators who most need the alert are
+    // exactly the ones who will never find a setting to enable it — five live
+    // nodes sat three releases behind while the mechanism to tell them did not
+    // exist. Default-on plus a visible notice and a one-click off is informed
+    // rather than silent, which is the property that actually matters.
+    timezone: map.timezone ?? "",
+    show_responses_default: map.show_responses_default === "on",
+    highlight_generated_default: map.highlight_generated_default === "on",
+    auto_change_notes: map.auto_change_notes === "on",
+    picker_typing: map.picker_typing === "editor" || map.picker_typing === "panel" ? map.picker_typing : "auto",
+    feed_order: map.feed_order || DEFAULT_FEED_ORDER,
+    front_page: map.front_page ?? "",
+    posts_path: map.posts_path || DEFAULT_POSTS_PATH,
+    // Left by default (Venkat, session 47); "bottom" keeps the menu below the content.
+    links_position: map.links_position === "bottom" || map.links_position === "right" ? map.links_position : "left",
+    links_threads: parseIdList(map.links_threads),
+    links_external: parseLinkList(map.links_external),
+    links_collections: map.links_collections !== "off",
+    links_opml: map.links_opml !== "off",
+    links_blygger_org: map.links_blygger_org !== "off",
+    links_blygger_com: map.links_blygger_com !== "off",
+    update_check: map.update_check !== "off",
+    update_feed_url: map.update_feed_url ?? "",
+    /** Cleared until the operator has seen the "alerts are on" notice once. */
+    update_notice_ack: map.update_notice_ack === "on",
+    // Studio extensions this node has turned on (docs/extensions.md). Empty by default.
+    extensions: parseEnabledExtensions(map.extensions),
+    // The setup wizard (session 46): pending on a fresh install, a one-time
+    // notice on a node that had published before the wizard existed
+    // (migration 0029), done once either is finished or dismissed.
+    setup: map.setup === "done" || map.setup === "notice" ? map.setup : "pending",
+  };
+}
+
+export async function putSettings(db: D1Database, patch: Partial<Record<string, string>>): Promise<void> {
+  const stmt = db.prepare("INSERT INTO settings (key, value) VALUES (?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value");
+  const batch = Object.entries(patch)
+    .filter(([, v]) => typeof v === "string")
+    .map(([k, v]) => stmt.bind(k, v));
+  if (batch.length) await db.batch(batch);
+}
+
+export async function getItem(db: D1Database, id: string): Promise<ItemRow | null> {
+  return db.prepare("SELECT * FROM items WHERE id = ?").bind(id).first<ItemRow>();
+}
+
+export async function createDraft(
+  db: D1Database,
+  contentMd: string,
+  kind: "fragment" | "thread" = "fragment",
+  stub: StubOf | null = null,
+  provenance: (ScopeProvenance | null)[] | undefined = undefined,
+): Promise<ItemRow> {
+  const id = newId();
+  const now = nowIso();
+  await db
+    .prepare("INSERT INTO items (id, kind, status, created, updated, version, content_md, dirty, stub_of, tk_provenance_json) VALUES (?, ?, 'draft', ?, ?, 0, ?, 1, ?, ?)")
+    .bind(id, kind, now, now, contentMd, stub ? JSON.stringify(stub) : null, provenance === undefined ? null : JSON.stringify(provenance))
+    .run();
+  return (await getItem(db, id))!;
+}
+
+/**
+ * Create a draft that descends from a pinned version (§2.4). Separate from
+ * createDraft() because lineage is written exactly once, here: there is no
+ * setter, no PUT field, and no way to retarget or clear it afterwards — an
+ * item either came from somewhere or it didn't, and a mutable lineage pointer
+ * would be a claim that could quietly become false after a pinned version
+ * document had already emitted it.
+ */
+export async function createFork(
+  db: D1Database,
+  contentMd: string,
+  kind: "fragment" | "thread",
+  ref: ForkedFrom,
+  cite: StubCite,
+): Promise<ItemRow> {
+  const id = newId();
+  const now = nowIso();
+  await db
+    .prepare(
+      `INSERT INTO items (id, kind, status, created, updated, version, content_md, dirty, forked_from, fork_cite)
+       VALUES (?, ?, 'draft', ?, ?, 0, ?, 1, ?, ?)`,
+    )
+    .bind(id, kind, now, now, contentMd, JSON.stringify(ref), JSON.stringify(cite))
+    .run();
+  return (await getItem(db, id))!;
+}
+
+/**
+ * The item's authored kind — 'fragment' or 'thread' — independent of the
+ * transient 'withdrawn' state a live item.kind carries after withdrawal.
+ * For a withdrawn item, derived from the last real (non-endcap) version's
+ * transclusions column, per §3.1 republish rules.
+ */
+export async function authoredKind(db: D1Database, item: ItemRow): Promise<"fragment" | "thread"> {
+  if (item.kind === "fragment" || item.kind === "thread") return item.kind;
+  const prev = await db
+    .prepare("SELECT transclusions FROM versions WHERE item_id = ? AND version = ?")
+    .bind(item.id, item.version - 1)
+    .first<{ transclusions: string | null }>();
+  return prev?.transclusions ? "thread" : "fragment";
+}
+
+/**
+ * Change a never-published draft's kind. Guarded by `version = 0` in the SQL
+ * as well as by the caller, because this is the one field that stops being
+ * editable the moment an item is published: from then on it is a wire field
+ * readers already have, and a row of history that must keep agreeing with the
+ * documents it describes.
+ */
+export async function setDraftKind(db: D1Database, id: string, kind: "fragment" | "thread"): Promise<void> {
+  await db
+    .prepare("UPDATE items SET kind = ?, dirty = 1, updated = ? WHERE id = ? AND version = 0")
+    .bind(kind, nowIso(), id)
+    .run();
+}
+
+/**
+ * Does this item show its verified responses?
+ *
+ * One function, because the rule is a fallback chain and a second copy of a
+ * fallback chain is how the public page and the studio's own control end up
+ * disagreeing about what is published — the worst possible place for a
+ * disagreement, since only one of them is what readers actually see.
+ *
+ * `responses_override` is the item's own decision; `null` means it has none
+ * and the global default applies (migration 0012).
+ */
+export function itemShowsResponses(item: ItemRow, settings: Settings): boolean {
+  return item.responses_override === null || item.responses_override === undefined
+    ? settings.show_responses_default
+    : item.responses_override === 1;
+}
+
+/** Save the working copy. Does not touch `updated` for ever-published items — that field is publish-facing. */
+export async function saveWorkingCopy(db: D1Database, id: string, contentMd: string): Promise<void> {
+  await db
+    .prepare("UPDATE items SET content_md = ?, dirty = 1, updated = CASE WHEN version = 0 THEN ? ELSE updated END WHERE id = ?")
+    .bind(contentMd, nowIso(), id)
+    .run();
+}
+
+/**
+ * Set or clear the working copy's stub citation (§2.2). Kept separate from
+ * saveWorkingCopy because the two are independent: retargeting a stub is not
+ * an edit of the prose, and clearing it leaves the body exactly as written —
+ * a former stub is just a thread that quotes something.
+ */
+export async function setStubOf(db: D1Database, id: string, stub: StubOf | null): Promise<void> {
+  await db
+    .prepare("UPDATE items SET stub_of = ?, dirty = 1 WHERE id = ?")
+    .bind(stub ? JSON.stringify(stub) : null, id)
+    .run();
+}
+
+/**
+ * Working-copy-side TK generation provenance (tk-core-plan.md §4/§5, migration
+ * 0005) — a cache of per-scope {sources,model,at}, positionally aligned to
+ * scope order as of the last /generate call. This is NOT the wire artifact
+ * (that's versions.generated_json, emitted at publish); it's the bridge that
+ * lets provenance survive from generate-time through to the next publish,
+ * since sources resolve to "the latest published version at generation time"
+ * (§2.3) rather than being re-resolved at publish like transclusions.
+ * Known limitation, documented rather than engineered around: if scopes are
+ * reordered/added/removed between generate calls, positional realignment can
+ * misattribute provenance to the wrong scope — the same class of fragility
+ * the /generate API's own index-based `{scope: n}` addressing already has.
+ */
+export function getTkProvenance(item: ItemRow): (ScopeProvenance | null)[] {
+  if (!item.tk_provenance_json) return [];
+  try {
+    const parsed = JSON.parse(item.tk_provenance_json);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+}
+
+/** Record scope `index`'s provenance, resizing the cache to `scopeCount` (current scope count). */
+export async function setTkProvenance(
+  db: D1Database,
+  itemId: string,
+  index: number,
+  scopeCount: number,
+  provenance: ScopeProvenance,
+): Promise<void> {
+  const item = await getItem(db, itemId);
+  const arr = getTkProvenance(item!);
+  while (arr.length < scopeCount) arr.push(null);
+  arr.length = scopeCount;
+  arr[index] = provenance;
+  await db.prepare("UPDATE items SET tk_provenance_json = ? WHERE id = ?").bind(JSON.stringify(arr), itemId).run();
+}
+
+/**
+ * Publish the working copy as version N+1. First strips every TK scope (§2.4)
+ * down to its bare output — content_md and the hash cover exactly that
+ * stripped text, never the studio grammar (decision #20). Fragments then
+ * render content_html directly; threads resolve every `![[id]]` directive
+ * against currently published local fragments and bake the snapshot into
+ * content_html, storing provenance in transclusions (§2.9). Generated spans
+ * with recorded provenance (model.getTkProvenance) get a `blyg-tk-gen`
+ * disclosure wrapper and an entry in `generated_json` (§3.1/§3.2); spans with
+ * no provenance (hand-authored output) are plain text, no disclosure.
+ * Throws TkPublishError for malformed/unresolved TK scopes, FragmentTooLongError
+ * if the published fragment exceeds the studio cap, or TransclusionResolveError
+ * if a thread directive fails to resolve — nothing is written in any case.
+ */
+export async function publish(db: D1Database, item: ItemRow, note: string | null, ourOrigin?: string, noteGenerated = false): Promise<number> {
+  const now = nowIso();
+  const version = item.version + 1;
+  const kind = await authoredKind(db, item);
+
+  // What gets published is authored text: XML-safe, no internal sentinels
+  // (studio#15). The working copy keeps whatever was typed.
+  const source = authoredText(item.content_md);
+  const { scopes, errors: parseErrors } = parseScopes(source);
+  const unresolved = unresolvedScopes(scopes);
+  if (parseErrors.length || unresolved.length) {
+    throw new TkPublishError([
+      ...parseErrors,
+      ...unresolved.map((s) => ({ at: s.start, reason: "scope has no output (never generated)" })),
+    ]);
+  }
+
+  const { text: strippedMd, spans } = stripToOutput(source, scopes);
+  if (kind === "fragment" && strippedMd.length > FRAGMENT_MAX_CHARS) {
+    throw new FragmentTooLongError(strippedMd.length, FRAGMENT_MAX_CHARS);
+  }
+
+  // An `impyrt` scope carries its provenance in the grammar (decision #37):
+  // generated elsewhere, so no sources are declared and `model` appears only if
+  // the author wrote it. Never `at` — when it was generated is not known here.
+  const cache = getTkProvenance(item);
+  const provenanceCache: (ScopeProvenance | null)[] = scopes.map((s, i) =>
+    s.imported ? { sources: [], ...(s.imported.model ? { model: s.imported.model } : {}) } : cache[i] ?? null,
+  );
+  const hasProvenance = scopes.map((_, i) => provenanceCache[i] != null);
+  const annotated = annotateGenerated(strippedMd, spans, hasProvenance);
+
+  // The absolute base for any `[[id]]` anchor, needed before the HTML is built:
+  // `content_html` travels to subscribers, so a relative href in it would
+  // resolve against *their* origin.
+  const settings = await getSettings(db);
+  const origin = ourOrigin ?? settings.site_url;
+
+  // `[[id]]` plain internal links (§10.1, decision #32) — substituted to
+  // sentinels here and spliced back after rendering, like TK's inline spans.
+  //
+  // Run over the body *and* over each independently-rendered generated block,
+  // because annotateGenerated has already lifted those blocks out of the body
+  // text: a link inside one would otherwise stay literal. Each block is
+  // resolved over its own markdown and rendered again, never over its HTML,
+  // where a label has already been through markdown and escaping once.
+  // Token sequence is global, so the maps merge.
+  const linkErrors: TransclusionRefError[] = [];
+  const links = await resolveInternalLinks(db, annotated.text, normalizedOrigin(origin));
+  linkErrors.push(...links.errors);
+  const { docs: blockLinks, errors: blockErrors } = await resolveBlockLinks(annotated, (md) =>
+    resolveInternalLinks(db, md, normalizedOrigin(origin)),
+  );
+  linkErrors.push(...blockErrors);
+  if (linkErrors.length) throw new TransclusionResolveError(linkErrors);
+  const spliceLinks = (html: string): string =>
+    [links, ...blockLinks].reduce((acc, doc) => applyInternalLinks(acc, doc), html);
+
+  let contentHtml: string;
+  let transclusionsJson: string | null = null;
+  if (kind === "thread") {
+    const resolved = await resolveTransclusions(db, links.text, item.id);
+    if (resolved.errors.length) throw new TransclusionResolveError(resolved.errors);
+    contentHtml = spliceLinks(applyGeneratedWrappers(resolved.html, annotated));
+    // §5.9 / decision #30: every **remote** entry carries its frozen human
+    // half. Stored inside the entry rather than in a column of its own, which
+    // is where a per-reference fact belongs in an array of references — and it
+    // makes the wire emission the stored object, so a published citation and
+    // the document that carries it cannot drift apart.
+    const withCites = [];
+    for (const entry of resolved.transclusions) {
+      withCites.push(
+        entry.origin
+          ? { ...entry, cited: await composeTransclusionCite(db, { ...entry, origin: entry.origin }, normalizedOrigin(origin), settings.site_title, now) }
+          : entry,
+      );
+    }
+    transclusionsJson = JSON.stringify(withCites);
+  } else {
+    contentHtml = spliceLinks(applyGeneratedWrappers(renderMarkdown(links.text), annotated));
+  }
+
+  // Every URL in `content_html` is made absolute against our own origin, for
+  // the same reason `[[id]]` anchors are (§10.1): the HTML travels to
+  // subscribers, and a host-rooted `/blyg/media/x.png` resolves against *their*
+  // host there — a 404, or someone else's file (session 30, found on a live
+  // import). Remote snapshots baked into a thread are already absolute against
+  // their own origin by now (resolveTarget), and absolutizeHtml leaves absolute
+  // URLs alone, so this cannot re-point them at us. The RSS description was
+  // already absolutized at feed time (§7); this makes the item document match.
+  if (origin) contentHtml = absolutizeHtml(contentHtml, normalizedOrigin(origin));
+
+  const generated: ScopeProvenance[] = scopes.map((_, i) => provenanceCache[i]).filter((p): p is ScopeProvenance => p != null);
+  const generatedJson = generated.length ? JSON.stringify(generated) : null;
+
+  // §2.2 version agreement: a stub's citation takes the version actually
+  // baked when the body quotes its target, so the quote and the citation can
+  // never disagree on a published document. Threads only — the working copy
+  // of a fragment never carries a stub (the API refuses to set one).
+  const stub = kind === "thread" ? parseStoredStub(item.stub_of) : null;
+  const agreed = stub ? applyVersionAgreement(stub, transclusionsJson ? (JSON.parse(transclusionsJson) as Transclusion[]) : [], normalizedOrigin(origin)) : null;
+  const stubJson = agreed ? JSON.stringify(agreed) : null;
+  // The citation's human half is resolved once and frozen (migration 0008):
+  // the subscription that supplies the source's name can be renamed or
+  // deleted, and the target can withdraw, but a published citation must keep
+  // reading correctly. Not on the wire — see StubCite.
+  const citeJson = agreed ? JSON.stringify(await composeStubCite(db, agreed, normalizedOrigin(origin), settings.site_title, now)) : null;
+
+  const hash = await contentHash(strippedMd);
+  // The attachments this version shows (§5.4, studio#7): appended ones, and
+  // inline ones its text places. Frozen with the version, so dropping one from
+  // the working copy changes the next version and never this one.
+  const shown = JSON.stringify(visibleMedia(await listMediaForItem(db, item.id), contentHtml).map((m) => m.id));
+  await db.batch([
+    db.prepare(
+      "INSERT INTO versions (item_id, version, content_md, content_html, content_hash, published_at, note, transclusions, generated_json, stub_of, stub_cite, note_generated) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+    ).bind(item.id, version, strippedMd, contentHtml, hash, now, note, transclusionsJson, generatedJson, stubJson, citeJson, note && noteGenerated ? 1 : 0),
+    // Rows still attached at the write, so a removal racing the publish wins.
+    db.prepare("INSERT INTO version_media (item_id, version, media_id) SELECT ?, ?, m.id FROM json_each(?) s JOIN media m ON m.id = s.value WHERE m.item_id = ?")
+      .bind(item.id, version, shown, item.id),
+    // The agreed citation goes back into the working copy as well, or the copy
+    // keeps citing the older version and differs from what it just published.
+    db.prepare("UPDATE items SET status = 'public', kind = ?, version = ?, dirty = 0, updated = ?, stub_of = ? WHERE id = ?")
+      .bind(kind, version, now, stubJson, item.id),
+  ]);
+  // The owner's private interaction log (src/interactions.ts): stubs, forks and
+  // quotes of other blygs' items that this version newly makes.
+  await recordPublishInteractions(db, item.id, version, normalizedOrigin(origin));
+  return version;
+}
+
+/** Origins are compared and built as strings everywhere; an empty site_url leaves us with no absolute base to offer. */
+function normalizedOrigin(raw: string): string {
+  if (!raw) return "";
+  return raw.endsWith("/") ? raw : raw + "/";
+}
+
+/**
+ * Withdraw a published item (v0.1-plan §2.3/§3.1, session-3 revision): publish
+ * a permanent empty-content endcap — version bump, kind 'withdrawn', item file
+ * stays 200 forever, one feed entry. Reversible via publish() (vN+1 restores
+ * 'public'/'fragment'). The working copy is retained; dirty=1 because it now
+ * differs from the published endcap. Pinned versions are untouched and remain
+ * fetchable.
+ */
+export async function withdraw(db: D1Database, item: ItemRow, note: string | null): Promise<number> {
+  const now = nowIso();
+  const version = item.version + 1;
+  const hash = await contentHash("");
+  await db.batch([
+    db.prepare("INSERT INTO versions (item_id, version, content_md, content_hash, published_at, note) VALUES (?, ?, '', ?, ?, ?)")
+      .bind(item.id, version, hash, now, note),
+    db.prepare("UPDATE items SET status = 'withdrawn', kind = 'withdrawn', version = ?, dirty = 1, updated = ? WHERE id = ?")
+      .bind(version, now, item.id),
+  ]);
+  return version;
+}
+
+/** Hard-delete a never-published draft. Published items are withdrawn, never deleted. */
+export async function discardDraft(db: D1Database, item: ItemRow): Promise<boolean> {
+  // Authorize at the atomic write boundary. A publication after the caller's
+  // read must preserve both the public item and its media.
+  const results = await db.batch([
+    db.prepare("DELETE FROM media WHERE item_id = ? AND EXISTS (SELECT 1 FROM items WHERE id = ? AND version = 0)").bind(item.id, item.id),
+    db.prepare("DELETE FROM items WHERE id = ? AND version = 0").bind(item.id),
+  ]);
+  return results[1].meta.changes > 0;
+}
+
+/** Thrown by restoreVersion() when the target version can't serve as a working copy. */
+export class RestoreVersionError extends Error {}
+
+/**
+ * Load a past version's content back into the working copy as an unpublished
+ * draft (studio furniture — decision #3). **Forward-only:** this does not
+ * rewind anything. The restored text becomes the working copy, which the
+ * author then publishes as v(current+1), so the version counter keeps its
+ * strict +1 discipline (decision #19) and no subscriber ever sees a version
+ * number go backwards (importer invariant #18b, which would read a regression
+ * as a suspected history rewrite).
+ *
+ * `tk_provenance_json` is cleared, not carried: published `content_md` is
+ * TK-stripped (publish() writes the bare output), so a restored copy has zero
+ * scopes, and the provenance cache is positionally aligned to scope order —
+ * keeping it would misattribute generation records to scopes that no longer
+ * exist.
+ *
+ * Restoring the **current** version is "discard changes", and there the
+ * working copy becomes that version whole: its stub citation comes back too
+ * (publish version-agrees the citation, §2.2, so the published one can be
+ * ahead of the working copy's), and the copy is clean again — unless the
+ * version disclosed generated text, whose provenance a restore cannot carry
+ * back (`holdsPublishedWords`). Before this, discard left `dirty` set and the
+ * old citation in place, so a stub whose quote had moved on showed
+ * "unpublished changes" that neither discard nor publish could clear.
+ */
+export async function restoreVersion(db: D1Database, item: ItemRow, version: number): Promise<void> {
+  const row = await getVersion(db, item.id, version);
+  if (!row) throw new RestoreVersionError(`item has no version ${version}`);
+  if (!row.content_md) {
+    throw new RestoreVersionError(`v${version} is a withdrawal endcap and has no content to restore`);
+  }
+  const discard = version === item.version;
+  await db
+    .prepare("UPDATE items SET content_md = ?, tk_provenance_json = NULL, stub_of = CASE WHEN ? THEN ? ELSE stub_of END, dirty = ? WHERE id = ?")
+    .bind(row.content_md, discard ? 1 : 0, row.stub_of, discard && !row.generated_json ? 0 : 1, item.id)
+    .run();
+}
+
+/** Irrevocably pin a version (§2.8). Idempotent; never unset. */
+export async function pinVersion(db: D1Database, itemId: string, version: number): Promise<void> {
+  await db
+    .prepare("UPDATE versions SET pinned = 1, pinned_at = COALESCE(pinned_at, ?) WHERE item_id = ? AND version = ?")
+    .bind(nowIso(), itemId, version)
+    .run();
+}
+
+export async function getVersion(db: D1Database, itemId: string, version: number): Promise<VersionRow | null> {
+  return db
+    .prepare("SELECT * FROM versions WHERE item_id = ? AND version = ?")
+    .bind(itemId, version)
+    .first<VersionRow>();
+}
+
+/** Published items + withdrawn endcaps, newest `updated` first (public surfaces). */
+export async function listPublic(db: D1Database, limit?: number): Promise<ItemRow[]> {
+  // `rowid DESC` is the tiebreaker, exactly as in feedEvents() (session 11):
+  // `updated` has only second precision, so two items published inside the
+  // same second sorted nondeterministically — the public feed's own order.
+  // rowid is monotonic with insertion, so it resolves ties by actual order.
+  const sql =
+    "SELECT * FROM items WHERE status IN ('public','withdrawn') ORDER BY updated DESC, rowid DESC" +
+    (limit ? " LIMIT ?" : "");
+  const stmt = limit ? db.prepare(sql).bind(limit) : db.prepare(sql);
+  return (await stmt.all<ItemRow>()).results;
+}
+
+export async function listAll(db: D1Database): Promise<ItemRow[]> {
+  return (await db.prepare("SELECT * FROM items ORDER BY updated DESC, rowid DESC").all<ItemRow>()).results;
+}
+
+export async function listVersions(db: D1Database, itemId: string): Promise<VersionRow[]> {
+  return (
+    await db.prepare("SELECT * FROM versions WHERE item_id = ? ORDER BY version ASC").bind(itemId).all<VersionRow>()
+  ).results;
+}
+
+/** The published (latest-version) content of an item; the empty endcap row for withdrawn items. */
+export async function publishedVersion(db: D1Database, item: Pick<ItemRow, "id" | "version">): Promise<VersionRow | null> {
+  return db
+    .prepare("SELECT * FROM versions WHERE item_id = ? AND version = ?")
+    .bind(item.id, item.version)
+    .first<VersionRow>();
+}
+
+export interface FeedEvent {
+  item: ItemRow;
+  version: VersionRow;
+}
+
+/**
+ * Publish events for the feed window, newest first (§2.6). One entry per
+ * publish event; withdrawn items contribute only their withdrawal endcap
+ * (their content is no longer published, so earlier events would be empty
+ * noise — DEVLOG session 2 interpretation, carried over from tombstones).
+ */
+export async function feedEvents(db: D1Database, limit: number): Promise<FeedEvent[]> {
+  const rows = await db
+    .prepare(
+      // rowid tiebreak: published_at has only second precision, so two
+      // events in the same second otherwise sort nondeterministically —
+      // rowid is monotonic with insertion (hence publish) order, so it
+      // resolves ties to the correct chronological order every time.
+      `SELECT v.item_id, v.version, v.content_md, v.content_hash, v.published_at, v.note, v.pinned, v.pinned_at
+       FROM versions v JOIN items i ON i.id = v.item_id
+       WHERE i.status = 'public' OR (i.status = 'withdrawn' AND v.version = i.version)
+       ORDER BY v.published_at DESC, v.version DESC, v.rowid DESC LIMIT ?`,
+    )
+    .bind(limit)
+    .all<VersionRow>();
+  const items = new Map<string, ItemRow>();
+  // One query for every distinct item, not one per event: the feed window
+  // holds up to 50 publish events and the old per-event getItem turned one
+  // feed render into dozens of sequential D1 roundtrips (~29s observed on
+  // live nodes — past every reader's fetch timeout, so the feed read as
+  // "invalid"). Order of events is preserved; only the item lookup is batched.
+  if (rows.results.length) {
+    const ids = JSON.stringify([...new Set(rows.results.map((v) => v.item_id))]);
+    const found = await db
+      .prepare(`SELECT * FROM items WHERE id IN (SELECT value FROM json_each(?))`)
+      .bind(ids)
+      .all<ItemRow>();
+    for (const item of found.results) items.set(item.id, item);
+  }
+  const events: FeedEvent[] = [];
+  for (const v of rows.results) {
+    events.push({ item: items.get(v.item_id)!, version: v });
+  }
+  return events;
+}
+
+export async function insertMedia(
+  db: D1Database,
+  row: Omit<MediaRow, "created">,
+  unpublishedOnly = false,
+  sha256: string | null = null,
+): Promise<MediaRow | null> {
+  const created = nowIso();
+  // Evaluate publication and insert in one statement. A publisher can run while
+  // the R2 upload awaits; a separate earlier read is not an authorization gate.
+  const result = await db
+    .prepare("INSERT INTO media (id, item_id, r2_key, mime, alt, created, inline, sha256) SELECT ?, ?, ?, ?, ?, ?, ?, ? WHERE ? = 0 OR ? IS NULL OR EXISTS (SELECT 1 FROM items WHERE id = ? AND version = 0)")
+    .bind(row.id, row.item_id, row.r2_key, row.mime, row.alt, created, row.inline, sha256, unpublishedOnly ? 1 : 0, row.item_id, row.item_id)
+    .run();
+  return result.meta.changes ? { ...row, created } : null;
+}
+
+/** The item's earlier upload of the same file (bytes and type) in the same placement, if any (migration 0028, studio#7). */
+export async function findDuplicateMedia(db: D1Database, itemId: string, sha256: string, mime: string, inline: number): Promise<MediaRow | null> {
+  return db
+    .prepare("SELECT id, item_id, r2_key, mime, alt, created, inline FROM media WHERE item_id = ? AND sha256 = ? AND mime = ? AND inline = ? ORDER BY created ASC LIMIT 1")
+    .bind(itemId, sha256, mime, inline)
+    .first<MediaRow>();
+}
+
+export async function getMedia(db: D1Database, id: string): Promise<MediaRow | null> {
+  return db.prepare("SELECT * FROM media WHERE id = ?").bind(id).first<MediaRow>();
+}
+
+/** The attachments a published version shows (migration 0031), detached rows included: what that version's document and pages list. */
+export async function listVersionMedia(db: D1Database, itemId: string, version: number): Promise<MediaRow[]> {
+  return (
+    await db
+      .prepare("SELECT m.* FROM version_media vm JOIN media m ON m.id = vm.media_id WHERE vm.item_id = ? AND vm.version = ? ORDER BY m.created ASC, m.rowid ASC")
+      .bind(itemId, version)
+      .all<MediaRow>()
+  ).results;
+}
+
+/** The working copy's attachments: what the next version will show. */
+export async function listMediaForItem(db: D1Database, itemId: string): Promise<MediaRow[]> {
+  return (
+    await db.prepare("SELECT * FROM media WHERE item_id = ? ORDER BY created ASC, rowid ASC").bind(itemId).all<MediaRow>()
+  ).results;
+}
+
+/** Latest public `updated` timestamp, for manifest/index/feed build dates. */
+export async function lastUpdated(db: D1Database): Promise<string> {
+  const row = await db
+    .prepare("SELECT MAX(updated) AS m FROM items WHERE status IN ('public','withdrawn')")
+    .first<{ m: string | null }>();
+  return row?.m ?? nowIso();
+}
